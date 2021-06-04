@@ -1,0 +1,5 @@
+.prettierrc.json
+frontend/node_modules
+backend/__pycache__
+backend/recipes-312722-5dd21da0fa79.json
+.DS_Store
