@@ -5,9 +5,13 @@ import NavigationBar from "./components/NavigationBar";
 import Container from "react-bootstrap/Container";
 import Row from "react-bootstrap/Row";
 import Col from "react-bootstrap/Col";
+import AddRecipeModal from "./components/AddRecipeModal";
+import FiltersModal from "./components/FiltersModal";
 
 function App() {
   const [recipeIds, setRecipeIds] = useState([]);
+  const [addRecipeModalVisible, setAddRecipeModalVisible] = useState(false);
+  const [filtersModalVisible, setFiltersModalVisible] = useState(false);
 
   useEffect(() => {
     fetch("http://127.0.0.1:5000/", {
@@ -24,7 +28,14 @@ function App() {
   return (
     <div className="App">
       <header className="App-header">
-        <NavigationBar />
+        <NavigationBar
+          onAddButtonClicked={() => {
+            setAddRecipeModalVisible(true);
+          }}
+          onFiltersButtonClicked={() => {
+            setFiltersModalVisible(true);
+          }}
+        />
         <Container>
           <Row>
             {recipeIds.map((id) => {
@@ -36,6 +47,14 @@ function App() {
             })}
           </Row>
         </Container>
+        <AddRecipeModal
+          visible={addRecipeModalVisible}
+          onClose={() => setAddRecipeModalVisible(false)}
+        />
+        <FiltersModal
+          visible={filtersModalVisible}
+          onClose={() => setFiltersModalVisible(false)}
+        />
       </header>
     </div>
   );

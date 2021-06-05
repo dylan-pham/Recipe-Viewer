@@ -1,30 +1,35 @@
 import React, { useState, useEffect } from "react";
 import "bootstrap/dist/css/bootstrap.min.css";
 import Button from "react-bootstrap/Button";
-import Modal from 'react-bootstrap/Modal';
+import Modal from "react-bootstrap/Modal";
+import Tab from "react-bootstrap/Tab";
+import Tabs from "react-bootstrap/Tabs";
 
-function FilterModal() {
-  const [show, setShow] = useState(false);
+function FilterModal(props) {
+  const [show, setShow] = useState(props.visible);
 
-  const handleClose = () => setShow(false);
-  const handleShow = () => setShow(true);
+  useEffect(() => {
+    setShow(props.visible);
+  }, [props.visible]);
 
   return (
     <>
-      <Button variant="primary" onClick={handleShow}>
-        Filters 
-      </Button>
-
-      <Modal show={show} onHide={handleClose}>
+      <Modal show={show} onHide={props.onClose}>
         <Modal.Header closeButton>
-          <Modal.Title>Modal heading</Modal.Title>
+          <Modal.Title>Filters</Modal.Title>
         </Modal.Header>
-        <Modal.Body>Woohoo, you're reading this text in a modal!</Modal.Body>
+        <Modal.Body>
+          <Tabs defaultActiveKey="profile" id="uncontrolled-tab-example">
+            <Tab eventKey="home" title="Author"></Tab>
+            <Tab eventKey="profile" title="Cuisine"></Tab>
+            <Tab eventKey="contact" title="Ingredients"></Tab>
+          </Tabs>
+        </Modal.Body>
         <Modal.Footer>
-          <Button variant="secondary" onClick={handleClose}>
+          <Button variant="secondary" onClick={props.onClose}>
             Close
           </Button>
-          <Button variant="primary" onClick={handleClose}>
+          <Button variant="primary" onClick={props.onClose}>
             Apply Filters
           </Button>
         </Modal.Footer>

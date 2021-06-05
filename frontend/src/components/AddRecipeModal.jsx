@@ -2,30 +2,119 @@ import React, { useState, useEffect } from "react";
 import "bootstrap/dist/css/bootstrap.min.css";
 import Button from "react-bootstrap/Button";
 import Modal from "react-bootstrap/Modal";
+import Form from "react-bootstrap/Form";
 
-function AddRecipeModal() {
-  const [show, setShow] = useState(false);
+function AddRecipeModal(props) {
+  const [show, setShow] = useState(props.visible);
 
-  const handleClose = () => setShow(false);
-  const handleShow = () => setShow(true);
+  useEffect(() => {
+    setShow(props.visible);
+  }, [props.visible]);
+
+  function processFormData() {
+    const fields = [
+      "name",
+      "author",
+      "cuisine",
+      "prep_time",
+      "cook_time",
+      "wait_time",
+      "img",
+      "link",
+    ];
+
+    const listFields = ["categories", "ingredients", "optional_ingredients"];
+
+    let recipeData = {};
+
+    fields.forEach((field) => {
+      const value = document.getElementById(field).value;
+      if (value.length !== 0) {
+        recipeData[field] = value;
+      }
+    });
+
+    listFields.forEach((field) => {
+      const value = document.getElementById(field).value;
+      if (value.length !== 0) {
+        recipeData[field] = value.split(", ");
+      }
+    });
+
+    const value = document.getElementById("subrecipes_ids").value;
+    if (value.length !== 0) {
+      recipeData["subrecipes_ids"] = value.split(", ").map((data) => {
+        const temp = {};
+        temp[data.split("-")[0]] = data.split("-")[1];
+        return temp;
+      });
+    }
+
+    addRecipe(recipeData);
+  }
+
+  function addRecipe(recipeData) {
+    fetch("http://127.0.0.1:5000/add", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(recipeData),
+    });
+  }
 
   return (
     <>
-      <Button variant="primary" onClick={handleShow}>
-        Filters
-      </Button>
-
-      <Modal show={show} onHide={handleClose}>
+      <Modal show={show} onHide={() => props.onClose()}>
         <Modal.Header closeButton>
-          <Modal.Title>Modal heading</Modal.Title>
+          <Modal.Title>Add Recipe</Modal.Title>
         </Modal.Header>
-        <Modal.Body>Woohoo, you're reading this text in a modal!</Modal.Body>
+        <Modal.Body>
+          <Form.Group>
+            <Form.Control id="name" type="text" placeholder="Name" />
+            <Form.Control id="author" type="text" placeholder="Author" />
+            <Form.Control id="cuisine" type="text" placeholder="Cuisine" />
+            <br />
+            <Form.Control id="prep_time" type="text" placeholder="Prep Time" />
+            <Form.Control id="cook_time" type="text" placeholder="Cook Time" />
+            <Form.Control id="wait_time" type="text" placeholder="Wait Time" />
+            <br />
+            <Form.Control
+              type="text"
+              id="ingredients"
+              placeholder="Ingredients (<ingredient name>, ...)"
+            />
+            <Form.Control
+              type="text"
+              id="optional_ingredients"
+              placeholder="Optional Ingredients"
+            />
+            <Form.Control
+              type="text"
+              id="subrecipes_ids"
+              placeholder="Subrecipe IDs(<recipe name>-<recipe id>, ...)"
+            />
+            <br />
+            <Form.Control id="img" type="text" placeholder="Image Link" />
+            <Form.Control id="link" type="text" placeholder="Recipe Link" />
+            <br />
+            <Form.Control
+              id="categories"
+              type="text"
+              placeholder="Categories"
+            />
+          </Form.Group>
+        </Modal.Body>
         <Modal.Footer>
-          <Button variant="secondary" onClick={handleClose}>
+          <Button variant="secondary" onClick={() => props.onClose()}>
             Close
           </Button>
-          <Button variant="primary" onClick={handleClose}>
-            Apply Filters
+          <Button
+            variant="primary"
+            onClick={() => {
+              processFormData();
+              props.onClose();
+            }}
+          >
+            Add recipe
           </Button>
         </Modal.Footer>
       </Modal>

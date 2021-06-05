@@ -6,7 +6,7 @@ import Row from "react-bootstrap/Row";
 import Col from "react-bootstrap/Col";
 import Button from "react-bootstrap/Button";
 
-function NavigationBar() {
+function NavigationBar(props) {
   const [show, setShow] = useState(false);
 
   const handleClose = () => setShow(false);
@@ -26,10 +26,10 @@ function NavigationBar() {
         <Col>
           <Nav className="justify-content-end" activeKey="/home">
             <Nav.Item>
-              <Button>Add</Button>
+              <Button onClick={props.onAddButtonClicked}>Add</Button>
             </Nav.Item>
             <Nav.Item>
-              <Button>Filter</Button>
+              <Button onClick={props.onFiltersButtonClicked}>Filter</Button>
             </Nav.Item>
 
             <Nav.Item>
