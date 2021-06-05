@@ -2,16 +2,17 @@ import React, { useState, useEffect, componentWillMount } from "react";
 import "bootstrap/dist/css/bootstrap.min.css";
 import RecipeCard from "./components/RecipeCard";
 import NavigationBar from "./components/NavigationBar";
-import Container from "react-bootstrap/Container";
-import Row from "react-bootstrap/Row";
 import Col from "react-bootstrap/Col";
+import Row from "react-bootstrap/Row";
 import AddRecipeModal from "./components/AddRecipeModal";
 import FiltersModal from "./components/FiltersModal";
+import CardDeck from "react-bootstrap/CardDeck";
+import Container from "react-bootstrap/Container";
 
 function App() {
   const [recipeIds, setRecipeIds] = useState([]);
   const [addRecipeModalVisible, setAddRecipeModalVisible] = useState(false);
-  const [filtersModalVisible, setFiltersModalVisible] = useState(false);
+  const [showFiltersModal, setShowFiltersModal] = useState(false);
   const [filters, setFilters] = useState({});
 
   useEffect(() => {
@@ -27,7 +28,7 @@ function App() {
   }, [filters]);
 
   function applyFilters(filters) {
-    setFilters(filters);
+    setFilters(filters, addRecipeModalVisible);
   }
 
   return (
@@ -38,10 +39,10 @@ function App() {
             setAddRecipeModalVisible(true);
           }}
           onFiltersButtonClicked={() => {
-            setFiltersModalVisible(true);
+            setShowFiltersModal(true);
           }}
         />
-        <Container>
+        <Container fluid>
           <Row>
             {recipeIds.map((id) => {
               return (
@@ -57,8 +58,8 @@ function App() {
           onClose={() => setAddRecipeModalVisible(false)}
         />
         <FiltersModal
-          visible={filtersModalVisible}
-          onClose={() => setFiltersModalVisible(false)}
+          visible={showFiltersModal}
+          onClose={() => setShowFiltersModal(false)}
         />
       </header>
     </div>

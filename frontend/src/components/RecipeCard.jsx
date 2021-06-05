@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from "react";
 import "bootstrap/dist/css/bootstrap.min.css";
 import Card from "react-bootstrap/Card";
+import RecipeModal from "./RecipeModal";
 
 function RecipeCard(props) {
   const [id] = useState(props.id);
   const [recipeData, setRecipeData] = useState(null);
+  const [showRecipeModal, setShowRecipeModal] = useState(false);
 
   useEffect(() => {
     setRecipeData(initRecipeDetails(id));
@@ -26,22 +28,27 @@ function RecipeCard(props) {
     return <div></div>;
   } else {
     return (
-      <Card>
-        <Card.Header>
-          <Card.Body>
-            <Card.Img
-              variant="top"
-              src={recipeData["img"]}
-              style={{ width: "18rem" }}
-            />
-            <Card.Title>{recipeData["name"]}</Card.Title>
-            <Card.Subtitle className="mb-2 text-muted">
-              {"by " + recipeData["author"] + " | " + recipeData["cuisine"]}
-            </Card.Subtitle>
-            <Card.Link href={recipeData["link"]}>Recipe Link</Card.Link>
-          </Card.Body>
-        </Card.Header>
-      </Card>
+      <>
+        <Card
+          style={{ width: "25rem", height: "25" }}
+          onClick={() => setShowRecipeModal(true)}
+        >
+          <Card.Header>
+            <Card.Body>
+              <Card.Img variant="top" src={recipeData["img"]} />
+              <Card.Title>{recipeData["name"]}</Card.Title>
+              <Card.Subtitle className="mb-2 text-muted">
+                {"by " + recipeData["author"] + " | " + recipeData["cuisine"]}
+              </Card.Subtitle>
+            </Card.Body>
+          </Card.Header>
+        </Card>
+        <RecipeModal
+          visible={showRecipeModal}
+          onClose={() => setShowRecipeModal(false)}
+          recipeData={recipeData}
+        />
+      </>
     );
   }
 }
