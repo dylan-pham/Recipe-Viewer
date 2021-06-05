@@ -12,18 +12,23 @@ function App() {
   const [recipeIds, setRecipeIds] = useState([]);
   const [addRecipeModalVisible, setAddRecipeModalVisible] = useState(false);
   const [filtersModalVisible, setFiltersModalVisible] = useState(false);
+  const [filters, setFilters] = useState({});
 
   useEffect(() => {
     fetch("http://127.0.0.1:5000/", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({}),
+      body: JSON.stringify(filters),
     })
       .then((response) => response.json())
       .then((data) => {
         setRecipeIds(data["res"]);
       });
-  }, []);
+  }, [filters]);
+
+  function applyFilters(filters) {
+    setFilters(filters);
+  }
 
   return (
     <div className="App">
