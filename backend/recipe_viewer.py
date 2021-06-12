@@ -155,6 +155,6 @@ class Recipe:
                        'link', 'img']:
                 setattr(recipe, key, source_dict[key])
 
-        recipe.total_time = recipe.prep_time + recipe.wait_time + recipe.cook_time
+        recipe.total_time = int(recipe.prep_time) + int(recipe.wait_time) + int(recipe.cook_time)
 
         return recipe
