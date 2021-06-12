@@ -15,6 +15,19 @@ function FilterModal(props) {
     setShow(props.visible);
   }, [props.visible]);
 
+  function getCategories() {
+    let categoriesToFilter = [];
+    Array.from(document.getElementById("categoryFilters").elements).forEach(
+      (element) => {
+        if (element.checked) {
+          categoriesToFilter.push(element.getAttribute("name"));
+        }
+      }
+    );
+
+    return categoriesToFilter;
+  }
+
   return (
     <>
       <Modal show={show} onHide={props.onClose} size="lg">
@@ -61,11 +74,15 @@ function FilterModal(props) {
               </InputGroup>
             </Tab>
             <Tab eventKey="contact" title="Categories">
-              <Form>
-                <Form.Check type={"checkbox"} label="soup" />
-                <Form.Check type={"checkbox"} label="rice dish" />
-                <Form.Check type={"checkbox"} label="seafood" />
-                <Form.Check type={"checkbox"} label="pork" />
+              <Form id="categoryFilters">
+                <Form.Check type={"checkbox"} name="soup" label="soup" />
+                <Form.Check
+                  type={"checkbox"}
+                  name="rice dish"
+                  label="rice dish"
+                />
+                <Form.Check type={"checkbox"} name="seafood" label="seafood" />
+                <Form.Check type={"checkbox"} name="pork" label="pork" />
               </Form>
             </Tab>
           </Tabs>
@@ -74,7 +91,12 @@ function FilterModal(props) {
           <Button variant="secondary" onClick={props.onClose}>
             Close
           </Button>
-          <Button variant="primary" onClick={props.onClose}>
+          <Button
+            variant="primary"
+            onClick={() => {
+              props.onClose(getCategories());
+            }}
+          >
             Apply Filters
           </Button>
         </Modal.Footer>

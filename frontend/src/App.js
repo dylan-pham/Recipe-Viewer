@@ -25,10 +25,10 @@ function App() {
       .then((data) => {
         setRecipeIds(data["res"]);
       });
-  }, [filters]);
+  }, [addRecipeModalVisible, filters]);
 
-  function applyFilters(filters) {
-    setFilters(filters, addRecipeModalVisible);
+  function applyFilters(categories) {
+    setFilters({ categories: categories });
   }
 
   return (
@@ -44,13 +44,11 @@ function App() {
         />
         <Container fluid>
           <Row>
-            {recipeIds.map((id) => {
-              return (
-                <Col>
-                  <RecipeCard id={id} />
-                </Col>
-              );
-            })}
+            {recipeIds.map((id) => (
+              <Col>
+                <RecipeCard id={id} />
+              </Col>
+            ))}
           </Row>
         </Container>
         <AddRecipeModal
@@ -59,7 +57,10 @@ function App() {
         />
         <FiltersModal
           visible={showFiltersModal}
-          onClose={() => setShowFiltersModal(false)}
+          onClose={(categories) => {
+            setShowFiltersModal(false);
+            applyFilters(categories);
+          }}
         />
       </header>
     </div>

@@ -12,43 +12,42 @@ app = Flask(__name__)
 cors = CORS(app)
 collection_ref = db.collection('recipes')
 
+
 # retrieves all recipes that match given filters
-
-
 @app.route('/', methods=['POST'])
 def index():
     req = request.get_json()
     recipe_ids = []
-    query_ref = collection_ref
 
-    for key in req:
-        if key in ['total_time', 'prep_time', 'wait_time', 'cook_time']:
-            query_ref = apply_time_filters(query_ref, key, req[key])
-        elif key == 'ingredients' or key == 'optional_ingredients':
-            query_ref = apply_ingredient_filters(query_ref, req[key])
-        elif key == 'categories':
-            query_ref = apply_category_filter(query_ref, req[key])
-        elif key in ['author', 'cuisine']:
-            query_ref = query_ref.where(key, '==', req[key])
-
-    for doc in query_ref.stream():
-        recipe_ids.append(doc.id)
+    if len(req) == 0:  # no filters to apply
+        for doc in collection_ref.stream():
+            recipe_ids.append(doc.id)
+    else:
+        for key in req:
+            if key == 'categories':
+                recipe_ids = apply_category_filters(collection_ref, req['categories'])
+            # if key in ['total_time', 'prep_time', 'wait_time', 'cook_time']:
+            #     query_ref = apply_time_filters(query_ref, key, req[key])
+            # elif key == 'ingredients' or key == 'optional_ingredients':
+            #     query_ref = apply_ingredient_filters(query_ref, req[key])
+                # elif key in ['author', 'cuisine']:
+            #     query_ref = query_ref.where(key, '==', req[key])
 
     return jsonify({"res": recipe_ids})
 
+
 # applies food cateogry filter
-
-
-def apply_category_filter(query_ref, categories):
+def apply_category_filters(collection_ref, categories):
+    union = set()
     for category in categories:
-        query_ref = query_ref.where('categories', 'array_contains', category)
+        union.update(map(lambda doc: doc.id, collection_ref.where(
+            "categories", "array_contains", category).stream()))
 
-    return query_ref
+    return list(union)
+
 
 # applies filter to check if a given ingredient belongs in any ingredients
 # lists
-
-
 def apply_ingredient_filters(query_ref, ingredients):
     for ingredient in ingredients:
         query_ref = query_ref.where('ingredients', 'array_contains',
@@ -58,9 +57,8 @@ def apply_ingredient_filters(query_ref, ingredients):
 
     return query_ref
 
+
 # applies filters to find entries below a certain threshold
-
-
 def apply_time_filters(query_ref, key, value):
     for i in range(round_to_nearest_fifth(value), 0, -5):
         query_ref = query_ref.where(key, '==', i)
@@ -77,7 +75,7 @@ def round_to_nearest_fifth(value):
         return value + 5 - value % 5
 
 
-@app.route('/getRecipe', methods=['POST'])
+@ app.route('/getRecipe', methods=['POST'])
 def get_recipe():
     req = request.get_json()
 
@@ -86,7 +84,7 @@ def get_recipe():
 # adds a recipe to database given various arguments
 
 
-@app.route('/add', methods=['POST'])
+@ app.route('/add', methods=['POST'])
 def add_recipe():
     req = request.get_json()
     collection_ref.add(Recipe.from_dict(req).to_dict())
@@ -96,7 +94,7 @@ def add_recipe():
 # updates a recipe given a document id and fields to update
 
 
-@app.route('/update', methods=['PUT'])
+@ app.route('/update', methods=['PUT'])
 def update_recipe():
     req = request.get_json()
     doc_id = req['id']
@@ -109,7 +107,7 @@ def update_recipe():
 # {'id': ...}
 
 
-@app.route('/delete', methods=['DELETE'])
+@ app.route('/delete', methods=['DELETE'])
 def delete_recipe():
     req = request.get_json()
     doc_id = req['id']
@@ -144,7 +142,7 @@ class Recipe:
         return vars(self)
 
     # converts given dictionary to Recipe
-    @staticmethod
+    @ staticmethod
     def from_dict(source_dict):
         recipe = Recipe()
 

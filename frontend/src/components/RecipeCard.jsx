@@ -4,13 +4,12 @@ import Card from "react-bootstrap/Card";
 import RecipeModal from "./RecipeModal";
 
 function RecipeCard(props) {
-  const [id] = useState(props.id);
   const [recipeData, setRecipeData] = useState(null);
   const [showRecipeModal, setShowRecipeModal] = useState(false);
 
   useEffect(() => {
-    setRecipeData(initRecipeDetails(id));
-  }, []);
+    setRecipeData(initRecipeDetails(props.id));
+  }, [props.id]);
 
   function initRecipeDetails(recipeId) {
     fetch("http://127.0.0.1:5000/getRecipe", {
