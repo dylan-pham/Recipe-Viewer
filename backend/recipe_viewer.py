@@ -33,7 +33,7 @@ def index():
             elif key == "cuisine":
                 filtered_recipes = filtered_recipes.intersection(
                     get_recipes_in_cuisines(collection_ref, req["cuisine"]))
-            elif key in ['total_time', 'prep_time', 'wait_time', 'cook_time']:
+            elif key in ['total_time', 'active_time']:
                 filtered_recipes = filtered_recipes.intersection(
                     get_recipes_less_than_time(collection_ref, req[key], key))
             elif key == "ingredients":
@@ -46,11 +46,7 @@ def index():
 
 
 def get_recipes_less_than_time(collection_ref, time, field_name):
-    union = set()
-    for i in range(round_to_nearest_fifth(time), 0, -5):
-        union.update(map(lambda doc: doc.id, collection_ref.where(field_name, "==", i).stream()))
-
-    return union
+    return map(lambda doc: doc.id, collection_ref.where(field_name, "<=", time).stream())
 
 
 def get_recipes_in_categories(collection_ref, categories):
@@ -165,6 +161,7 @@ class Recipe:
         self.wait_time = wait_time
         self.cook_time = cook_time
         self.total_time = prep_time + wait_time + cook_time
+        self.active_time = prep_time + cook_time
         self.subrecipes_ids = subrecipes_ids
         self.categories = categories
         self.link = link
@@ -187,5 +184,6 @@ class Recipe:
                 setattr(recipe, key, source_dict[key])
 
         recipe.total_time = int(recipe.prep_time) + int(recipe.wait_time) + int(recipe.cook_time)
+        recipe.active_time = int(recipe.prep_time) + int(recipe.cook_time)
 
         return recipe

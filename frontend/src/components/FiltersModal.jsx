@@ -7,6 +7,7 @@ import Tabs from "react-bootstrap/Tabs";
 import Form from "react-bootstrap/Form";
 import FormControl from "react-bootstrap/FormControl";
 import InputGroup from "react-bootstrap/InputGroup";
+import DurationPicker from "react-duration-picker";
 
 function FilterModal(props) {
   const [show, setShow] = useState(props.visible);
@@ -68,7 +69,37 @@ function FilterModal(props) {
   }
 
   function getMaximumTotalTimeFilter() {
-    return document.getElementById("maxTotalTime").value;
+    let maxTotalHours = parseInt(
+      document.getElementById("maxTotalHours").value
+    );
+    let maxTotalMinutes = parseInt(
+      document.getElementById("maxTotalMinutes").value
+    );
+
+    if (isNaN(maxTotalHours)) {
+      return maxTotalMinutes;
+    } else if (isNaN(maxTotalMinutes)) {
+      return maxTotalHours * 60;
+    } else {
+      return maxTotalHours * 60 + maxTotalMinutes;
+    }
+  }
+
+  function getMaxActiveTimeFilter() {
+    let maxActiveHours = parseInt(
+      document.getElementById("maxActiveHours").value
+    );
+    let maxActiveMinutes = parseInt(
+      document.getElementById("maxActiveMinutes").value
+    );
+
+    if (isNaN(maxActiveHours)) {
+      return maxActiveMinutes;
+    } else if (isNaN(maxActiveMinutes)) {
+      return maxActiveHours * 60;
+    } else {
+      return maxActiveHours * 60 + maxActiveMinutes;
+    }
   }
 
   function getFilters() {
@@ -78,6 +109,8 @@ function FilterModal(props) {
     let authorsToFilter = getAuthorsToFilter();
     let cuisinesToFilter = getCuisinesToFilter();
     let ingredientsToFilter = getIngredientsToFilter();
+    let maximumTotalTime = getMaximumTotalTimeFilter();
+    let maxActiveTime = getMaxActiveTimeFilter();
 
     if (categoriesToFilter.length !== 0) {
       filters["categories"] = categoriesToFilter;
@@ -91,12 +124,12 @@ function FilterModal(props) {
     if (ingredientsToFilter.length !== 0) {
       filters["ingredients"] = ingredientsToFilter;
     }
-    // if (
-    //   getMaximumTotalTimeFilter() !== null &&
-    //   Number.isInteger(getMaximumTotalTimeFilter())
-    // ) {
-    //   alert("Test");
-    // }
+    if (!isNaN(maximumTotalTime)) {
+      filters["total_time"] = maximumTotalTime;
+    }
+    if (!isNaN(maxActiveTime)) {
+      filters["active_time"] = maxActiveTime;
+    }
 
     return filters;
   }
@@ -162,16 +195,36 @@ function FilterModal(props) {
             </Tab>
             <Tab eventKey="time" title="Time">
               <InputGroup>
-                <FormControl placeholder="total" />
-                <InputGroup.Text>hours</InputGroup.Text>
-                <FormControl placeholder="time" />
-                <InputGroup.Text>minutes</InputGroup.Text>
+                <InputGroup.Text>total time</InputGroup.Text>
+                <input
+                  id="maxTotalHours"
+                  type="number"
+                  min="0"
+                  max="48"
+                ></input>
+                <InputGroup.Text>:</InputGroup.Text>
+                <input
+                  id="maxTotalMinutes"
+                  type="number"
+                  min="0"
+                  max="60"
+                ></input>
               </InputGroup>
               <InputGroup>
-                <FormControl placeholder="active" />
-                <InputGroup.Text>hours</InputGroup.Text>
-                <FormControl placeholder="time" />
-                <InputGroup.Text>minutes</InputGroup.Text>
+                <InputGroup.Text>active time</InputGroup.Text>
+                <input
+                  id="maxActiveHours"
+                  type="number"
+                  min="0"
+                  max="24"
+                ></input>
+                <InputGroup.Text>:</InputGroup.Text>
+                <input
+                  id="maxActiveMinutes"
+                  type="number"
+                  min="0"
+                  max="60"
+                ></input>
               </InputGroup>
             </Tab>
             <Tab eventKey="contact" title="Categories">

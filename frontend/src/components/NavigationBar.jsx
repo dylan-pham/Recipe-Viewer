@@ -26,10 +26,20 @@ function NavigationBar(props) {
         <Col>
           <Nav className="justify-content-end" activeKey="/home">
             <Nav.Item>
-              <Button onClick={props.onAddButtonClicked}>Add</Button>
+              <Nav.Link
+                variant="outline-primary"
+                onClick={props.onAddButtonClicked}
+              >
+                Add
+              </Nav.Link>
             </Nav.Item>
             <Nav.Item>
-              <Button onClick={props.onFiltersButtonClicked}>Filter</Button>
+              <Nav.Link
+                variant="outline-primary"
+                onClick={props.onFiltersButtonClicked}
+              >
+                Filter
+              </Nav.Link>
             </Nav.Item>
           </Nav>
         </Col>
