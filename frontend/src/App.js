@@ -27,8 +27,8 @@ function App() {
       });
   }, [addRecipeModalVisible, filters]);
 
-  function applyFilters(categories) {
-    setFilters({ categories: categories });
+  function applyFilters(filters) {
+    setFilters(filters);
   }
 
   return (
@@ -57,9 +57,9 @@ function App() {
         />
         <FiltersModal
           visible={showFiltersModal}
-          onClose={(categories) => {
+          onClose={(filters) => {
             setShowFiltersModal(false);
-            applyFilters(categories);
+            applyFilters(filters);
           }}
         />
       </header>

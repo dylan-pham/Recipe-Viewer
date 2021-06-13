@@ -31,10 +31,6 @@ function NavigationBar(props) {
             <Nav.Item>
               <Button onClick={props.onFiltersButtonClicked}>Filter</Button>
             </Nav.Item>
-
-            <Nav.Item>
-              <Button>Search</Button>
-            </Nav.Item>
           </Nav>
         </Col>
       </Row>

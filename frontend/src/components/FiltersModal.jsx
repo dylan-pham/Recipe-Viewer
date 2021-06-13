@@ -15,9 +15,9 @@ function FilterModal(props) {
     setShow(props.visible);
   }, [props.visible]);
 
-  function getCategories() {
+  function getCategoriesToFilter() {
     let categoriesToFilter = [];
-    Array.from(document.getElementById("categoryFilters").elements).forEach(
+    Array.from(document.getElementById("categoriesSelector").elements).forEach(
       (element) => {
         if (element.checked) {
           categoriesToFilter.push(element.getAttribute("name"));
@@ -26,6 +26,79 @@ function FilterModal(props) {
     );
 
     return categoriesToFilter;
+  }
+
+  function getAuthorsToFilter() {
+    let authorsToFilter = [];
+    Array.from(document.getElementById("authorsSelector").elements).forEach(
+      (element) => {
+        if (element.checked) {
+          authorsToFilter.push(element.getAttribute("name"));
+        }
+      }
+    );
+
+    return authorsToFilter;
+  }
+
+  function getCuisinesToFilter() {
+    let cuisinesToFilter = [];
+    Array.from(document.getElementById("cuisinesSelector").elements).forEach(
+      (element) => {
+        if (element.checked) {
+          cuisinesToFilter.push(element.getAttribute("name"));
+        }
+      }
+    );
+
+    return cuisinesToFilter;
+  }
+
+  function getIngredientsToFilter() {
+    let ingredientsToFilter = [];
+    Array.from(document.getElementById("ingredientsSelector").elements).forEach(
+      (element) => {
+        if (element.checked) {
+          ingredientsToFilter.push(element.getAttribute("name"));
+        }
+      }
+    );
+
+    return ingredientsToFilter;
+  }
+
+  function getMaximumTotalTimeFilter() {
+    return document.getElementById("maxTotalTime").value;
+  }
+
+  function getFilters() {
+    let filters = {};
+
+    let categoriesToFilter = getCategoriesToFilter();
+    let authorsToFilter = getAuthorsToFilter();
+    let cuisinesToFilter = getCuisinesToFilter();
+    let ingredientsToFilter = getIngredientsToFilter();
+
+    if (categoriesToFilter.length !== 0) {
+      filters["categories"] = categoriesToFilter;
+    }
+    if (authorsToFilter.length !== 0) {
+      filters["author"] = authorsToFilter;
+    }
+    if (cuisinesToFilter.length !== 0) {
+      filters["cuisine"] = cuisinesToFilter;
+    }
+    if (ingredientsToFilter.length !== 0) {
+      filters["ingredients"] = ingredientsToFilter;
+    }
+    // if (
+    //   getMaximumTotalTimeFilter() !== null &&
+    //   Number.isInteger(getMaximumTotalTimeFilter())
+    // ) {
+    //   alert("Test");
+    // }
+
+    return filters;
   }
 
   return (
@@ -37,26 +110,54 @@ function FilterModal(props) {
         <Modal.Body>
           <Tabs defaultActiveKey="profile" id="uncontrolled-tab-example">
             <Tab eventKey="home" title="Author">
-              <Form>
-                <Form.Check type={"checkbox"} label="Khoi" />
-                <Form.Check type={"checkbox"} label="Hungry Huy" />
-                <Form.Check type={"checkbox"} label="Gordon Ramsay" />
-                <Form.Check type={"checkbox"} label="Jamie Oliver" />
+              <Form id="authorsSelector">
+                <Form.Check type={"checkbox"} name="Khoi" label="Khoi" />
+                <Form.Check
+                  type={"checkbox"}
+                  name="Hungry Huy"
+                  label="Hungry Huy"
+                />
+                <Form.Check
+                  type={"checkbox"}
+                  name="Gordon Ramsay"
+                  label="Gordon Ramsay"
+                />
+                <Form.Check
+                  type={"checkbox"}
+                  name="Jamie Oliver"
+                  label="Jamie Oliver"
+                />
               </Form>
             </Tab>
             <Tab eventKey="cuisine" title="Cuisine">
-              <Form>
-                <Form.Check type={"checkbox"} label="Vietnamese" />
-                <Form.Check type={"checkbox"} label="Italian" />
-                <Form.Check type={"checkbox"} label="American" />
-                <Form.Check type={"checkbox"} label="Japanese" />
+              <Form id="cuisinesSelector">
+                <Form.Check
+                  type={"checkbox"}
+                  name="Vietnamese"
+                  label="Vietnamese"
+                />
+                <Form.Check type={"checkbox"} name="Italian" label="Italian" />
+                <Form.Check
+                  type={"checkbox"}
+                  name="American"
+                  label="American"
+                />
+                <Form.Check
+                  type={"checkbox"}
+                  name="Japanese"
+                  label="Japanese"
+                />
               </Form>
             </Tab>
             <Tab eventKey="ingredients" title="Ingredients">
-              <Form>
-                <Form.Check type={"checkbox"} label="tomato" />
-                <Form.Check type={"checkbox"} label="lettuce" />
-                <Form.Check type={"checkbox"} label="bread flour" />
+              <Form id="ingredientsSelector">
+                <Form.Check type={"checkbox"} name="tomato" label="tomato" />
+                <Form.Check type={"checkbox"} name="lettuce" label="lettuce" />
+                <Form.Check
+                  type={"checkbox"}
+                  name="bread flour"
+                  label="bread flour"
+                />
               </Form>
             </Tab>
             <Tab eventKey="time" title="Time">
@@ -74,7 +175,7 @@ function FilterModal(props) {
               </InputGroup>
             </Tab>
             <Tab eventKey="contact" title="Categories">
-              <Form id="categoryFilters">
+              <Form id="categoriesSelector">
                 <Form.Check type={"checkbox"} name="soup" label="soup" />
                 <Form.Check
                   type={"checkbox"}
@@ -88,13 +189,13 @@ function FilterModal(props) {
           </Tabs>
         </Modal.Body>
         <Modal.Footer>
-          <Button variant="secondary" onClick={props.onClose}>
+          <Button variant="secondary" onClick={() => props.onClose({})}>
             Close
           </Button>
           <Button
             variant="primary"
             onClick={() => {
-              props.onClose(getCategories());
+              props.onClose(getFilters());
             }}
           >
             Apply Filters

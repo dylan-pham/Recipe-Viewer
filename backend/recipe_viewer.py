@@ -17,51 +17,84 @@ collection_ref = db.collection('recipes')
 @app.route('/', methods=['POST'])
 def index():
     req = request.get_json()
-    recipe_ids = []
+    recipes = set()  # set of recipe ids
 
-    if len(req) == 0:  # no filters to apply
-        for doc in collection_ref.stream():
-            recipe_ids.append(doc.id)
+    for doc in collection_ref.stream():
+        recipes.add(doc.id)
+
     else:
+        filtered_recipes = recipes
         for key in req:
-            if key == 'categories':
-                recipe_ids = apply_category_filters(collection_ref, req['categories'])
-            # if key in ['total_time', 'prep_time', 'wait_time', 'cook_time']:
-            #     query_ref = apply_time_filters(query_ref, key, req[key])
-            # elif key == 'ingredients' or key == 'optional_ingredients':
-            #     query_ref = apply_ingredient_filters(query_ref, req[key])
-                # elif key in ['author', 'cuisine']:
-            #     query_ref = query_ref.where(key, '==', req[key])
+            if key == "categories":
+                filtered_recipes = filtered_recipes.intersection(
+                    get_recipes_in_categories(collection_ref, req["categories"]))
+            elif key == "author":
+                filtered_recipes = filtered_recipes.intersection(get_recipes_by_authors(collection_ref, req["author"]))
+            elif key == "cuisine":
+                filtered_recipes = filtered_recipes.intersection(
+                    get_recipes_in_cuisines(collection_ref, req["cuisine"]))
+            elif key in ['total_time', 'prep_time', 'wait_time', 'cook_time']:
+                filtered_recipes = filtered_recipes.intersection(
+                    get_recipes_less_than_time(collection_ref, req[key], key))
+            elif key == "ingredients":
+                filtered_recipes = filtered_recipes.intersection(
+                    get_recipes_containing_ingredients(collection_ref, req["ingredients"]))
 
-    return jsonify({"res": recipe_ids})
+        recipes = filtered_recipes
+
+    return jsonify({"res": list(recipes)})
 
 
-# applies food cateogry filter
-def apply_category_filters(collection_ref, categories):
+def get_recipes_less_than_time(collection_ref, time, field_name):
+    union = set()
+    for i in range(round_to_nearest_fifth(time), 0, -5):
+        union.update(map(lambda doc: doc.id, collection_ref.where(field_name, "==", i).stream()))
+
+    return union
+
+
+def get_recipes_in_categories(collection_ref, categories):
     union = set()
     for category in categories:
         union.update(map(lambda doc: doc.id, collection_ref.where(
             "categories", "array_contains", category).stream()))
 
-    return list(union)
+    return union
 
 
-# applies filter to check if a given ingredient belongs in any ingredients
-# lists
-def apply_ingredient_filters(query_ref, ingredients):
+def get_recipes_containing_ingredients(collection_ref, ingredients):
+    union = set()
     for ingredient in ingredients:
-        query_ref = query_ref.where('ingredients', 'array_contains',
-                                    ingredient)
-        query_ref = query_ref.where('optional_ingredients', 'array_contains',
-                                    ingredient)
+        union.update(map(lambda doc: doc.id, collection_ref.where(
+            "ingredients", "array_contains", ingredient).stream()))
+        union.update(map(lambda doc: doc.id, collection_ref.where(
+            "optional_ingredients", "array_contains", ingredient).stream()))
 
-    return query_ref
+    return union
+
+
+def get_recipes_by_authors(collection_ref, authors):
+    union = set()
+    for author in authors:
+        union.update(map(lambda doc: doc.id, collection_ref.where(
+            "author", "==", author).stream()))
+
+    return union
+
+
+def get_recipes_in_cuisines(collection_ref, cuisines):
+    union = set()
+    for cuisine in cuisines:
+        union.update(map(lambda doc: doc.id, collection_ref.where(
+            "cuisine", "==", cuisine).stream()))
+
+    return union
 
 
 # applies filters to find entries below a certain threshold
 def apply_time_filters(query_ref, key, value):
     for i in range(round_to_nearest_fifth(value), 0, -5):
-        query_ref = query_ref.where(key, '==', i)
+        query_ref = query_ref.where(key, '<=', i)
 
     return query_ref
 
