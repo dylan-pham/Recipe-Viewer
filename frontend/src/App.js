@@ -6,7 +6,6 @@ import Col from "react-bootstrap/Col";
 import Row from "react-bootstrap/Row";
 import AddRecipeModal from "./components/AddRecipeModal";
 import FiltersModal from "./components/FiltersModal";
-import CardDeck from "react-bootstrap/CardDeck";
 import Container from "react-bootstrap/Container";
 
 function App() {
@@ -42,15 +41,11 @@ function App() {
             setShowFiltersModal(true);
           }}
         />
-        <Container fluid>
-          <Row>
-            {recipeIds.map((id) => (
-              <Col>
-                <RecipeCard id={id} />
-              </Col>
-            ))}
-          </Row>
-        </Container>
+        <Row className="justify-content-center">
+          {recipeIds.map((id) => (
+            <RecipeCard id={id} />
+          ))}
+        </Row>
         <AddRecipeModal
           visible={addRecipeModalVisible}
           onClose={() => setAddRecipeModalVisible(false)}
