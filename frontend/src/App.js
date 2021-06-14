@@ -1,14 +1,12 @@
-import React, { useState, useEffect, componentWillMount } from "react";
+import React, { useState, useEffect } from "react";
 import "bootstrap/dist/css/bootstrap.min.css";
-import RecipeCard from "./components/RecipeCard";
+import RecipeOverviewCard from "./components/RecipeOverviewCard";
 import NavigationBar from "./components/NavigationBar";
-import Col from "react-bootstrap/Col";
 import Row from "react-bootstrap/Row";
 import AddRecipeModal from "./components/AddRecipeModal";
 import FiltersModal from "./components/FiltersModal";
-import Container from "react-bootstrap/Container";
 
-function App() {
+export default function App() {
   const [recipeIds, setRecipeIds] = useState([]);
   const [addRecipeModalVisible, setAddRecipeModalVisible] = useState(false);
   const [showFiltersModal, setShowFiltersModal] = useState(false);
@@ -26,10 +24,6 @@ function App() {
       });
   }, [addRecipeModalVisible, filters]);
 
-  function applyFilters(filters) {
-    setFilters(filters);
-  }
-
   return (
     <div className="App">
       <header className="App-header">
@@ -43,7 +37,7 @@ function App() {
         />
         <Row className="justify-content-center">
           {recipeIds.map((id) => (
-            <RecipeCard id={id} />
+            <RecipeOverviewCard id={id} />
           ))}
         </Row>
         <AddRecipeModal
@@ -54,12 +48,10 @@ function App() {
           visible={showFiltersModal}
           onClose={(filters) => {
             setShowFiltersModal(false);
-            applyFilters(filters);
+            setFilters(filters);
           }}
         />
       </header>
     </div>
   );
 }
-
-export default App;

@@ -4,62 +4,12 @@ import Button from "react-bootstrap/Button";
 import Modal from "react-bootstrap/Modal";
 import Form from "react-bootstrap/Form";
 
-function AddRecipeModal(props) {
+export default function AddRecipeModal(props) {
   const [show, setShow] = useState(props.visible);
 
   useEffect(() => {
     setShow(props.visible);
   }, [props.visible]);
-
-  function processFormData() {
-    const fields = [
-      "name",
-      "author",
-      "cuisine",
-      "prep_time",
-      "cook_time",
-      "wait_time",
-      "img",
-      "link",
-    ];
-
-    const listFields = ["categories", "ingredients", "optional_ingredients"];
-
-    let recipeData = {};
-
-    fields.forEach((field) => {
-      const value = document.getElementById(field).value;
-      if (value.length !== 0) {
-        recipeData[field] = value;
-      }
-    });
-
-    listFields.forEach((field) => {
-      const value = document.getElementById(field).value;
-      if (value.length !== 0) {
-        recipeData[field] = value.split(", ");
-      }
-    });
-
-    const value = document.getElementById("subrecipes_ids").value;
-    if (value.length !== 0) {
-      recipeData["subrecipes_ids"] = value.split(", ").map((data) => {
-        const temp = {};
-        temp[data.split("-")[0]] = data.split("-")[1];
-        return temp;
-      });
-    }
-
-    addRecipe(recipeData);
-  }
-
-  function addRecipe(recipeData) {
-    fetch("http://127.0.0.1:5000/add", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(recipeData),
-    });
-  }
 
   return (
     <>
@@ -80,7 +30,7 @@ function AddRecipeModal(props) {
             <Form.Control
               type="text"
               id="ingredients"
-              placeholder="Ingredients (<ingredient name>, ...)"
+              placeholder="Ingredients (<ingredient>, ...)"
             />
             <Form.Control
               type="text"
@@ -90,7 +40,7 @@ function AddRecipeModal(props) {
             <Form.Control
               type="text"
               id="subrecipes_ids"
-              placeholder="Subrecipe IDs(<recipe name>-<recipe id>, ...)"
+              placeholder="Subrecipe IDs(<recipe>-<recipe id>, ...)"
             />
             <br />
             <Form.Control id="img" type="text" placeholder="Image Link" />
@@ -99,7 +49,7 @@ function AddRecipeModal(props) {
             <Form.Control
               id="categories"
               type="text"
-              placeholder="Categories"
+              placeholder="Categories (<category>, ...)"
             />
           </Form.Group>
         </Modal.Body>
@@ -110,7 +60,7 @@ function AddRecipeModal(props) {
           <Button
             variant="primary"
             onClick={() => {
-              processFormData();
+              addRecipe(processFormData());
               props.onClose();
             }}
           >
@@ -122,4 +72,52 @@ function AddRecipeModal(props) {
   );
 }
 
-export default AddRecipeModal;
+function processFormData() {
+  const fields = [
+    "name",
+    "author",
+    "cuisine",
+    "prep_time",
+    "cook_time",
+    "wait_time",
+    "img",
+    "link",
+  ];
+
+  const listFields = ["categories", "ingredients", "optional_ingredients"];
+
+  let recipeData = {};
+
+  fields.forEach((field) => {
+    const value = document.getElementById(field).value;
+    if (value.length !== 0) {
+      recipeData[field] = value;
+    }
+  });
+
+  listFields.forEach((field) => {
+    const value = document.getElementById(field).value;
+    if (value.length !== 0) {
+      recipeData[field] = value.split(", ");
+    }
+  });
+
+  const value = document.getElementById("subrecipes_ids").value;
+  if (value.length !== 0) {
+    recipeData["subrecipes_ids"] = value.split(", ").map((data) => {
+      const temp = {};
+      temp[data.split("-")[0]] = data.split("-")[1];
+      return temp;
+    });
+  }
+
+  return recipeData;
+}
+
+function addRecipe(recipeData) {
+  fetch("http://127.0.0.1:5000/add", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(recipeData),
+  });
+}

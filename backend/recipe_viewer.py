@@ -4,45 +4,172 @@ import firebase_admin
 from firebase_admin import credentials
 from firebase_admin import firestore
 
-cred = credentials.Certificate('recipes-312722-5dd21da0fa79.json')
+cred = credentials.Certificate("recipes-312722-5dd21da0fa79.json")
 firebase_admin.initialize_app(cred)
 db = firestore.client()
 
 app = Flask(__name__)
 cors = CORS(app)
-collection_ref = db.collection('recipes')
+collection_ref = db.collection("recipes")
 
 
-# retrieves all recipes that match given filters
-@app.route('/', methods=['POST'])
+# retrieves all recipe ids that match supplied filters
+#
+# sample request:
+# {
+#   "categories": [...],            (optional)
+#   "author": [...],                (optional)
+#   "cuisine": [...],               (optional)
+#   "total_time": <in minutes>,     (optional)
+#   "active_time": <in minutes>,    (optional)
+#   "ingredients": [...]            (optional)
+# }
+#
+# sample response:
+# {
+#   "res": [<recipe id>...]
+# }
+@app.route("/", methods=["POST"])
 def index():
     req = request.get_json()
-    recipes = set()  # set of recipe ids
+    recipe_ids = set()
 
     for doc in collection_ref.stream():
-        recipes.add(doc.id)
+        recipe_ids.add(doc.id)
 
-    else:
-        filtered_recipes = recipes
-        for key in req:
-            if key == "categories":
-                filtered_recipes = filtered_recipes.intersection(
-                    get_recipes_in_categories(collection_ref, req["categories"]))
-            elif key == "author":
-                filtered_recipes = filtered_recipes.intersection(get_recipes_by_authors(collection_ref, req["author"]))
-            elif key == "cuisine":
-                filtered_recipes = filtered_recipes.intersection(
-                    get_recipes_in_cuisines(collection_ref, req["cuisine"]))
-            elif key in ['total_time', 'active_time']:
-                filtered_recipes = filtered_recipes.intersection(
-                    get_recipes_less_than_time(collection_ref, req[key], key))
-            elif key == "ingredients":
-                filtered_recipes = filtered_recipes.intersection(
-                    get_recipes_containing_ingredients(collection_ref, req["ingredients"]))
+    for key in req:
+        if key == "categories":
+            recipe_ids = recipe_ids.intersection(
+                get_recipes_in_categories(collection_ref, req["categories"]))
+        elif key == "author":
+            recipe_ids = recipe_ids.intersection(get_recipes_by_authors(collection_ref, req["author"]))
+        elif key == "cuisine":
+            recipe_ids = recipe_ids.intersection(
+                get_recipes_in_cuisines(collection_ref, req["cuisine"]))
+        elif key in ["total_time", "active_time"]:
+            recipe_ids = recipe_ids.intersection(
+                get_recipes_less_than_time(collection_ref, req[key], key))
+        elif key == "ingredients":
+            recipe_ids = recipe_ids.intersection(
+                get_recipes_containing_ingredients(collection_ref, req["ingredients"]))
 
-        recipes = filtered_recipes
+    return jsonify({"res": list(recipe_ids)})
 
-    return jsonify({"res": list(recipes)})
+
+# retrieves recipe details given id
+#
+# sample request:
+# {
+#   "id": <recipe id>   (required)
+# }
+#
+# sample response:
+# {
+#   "name": <>,
+#   "author": <>,
+#   "cuisine": <>,
+#   "ingredients": [...],
+#   "optional_ingredients": [...],
+#   "prep_time": <>,
+#   "wait_time": <>,
+#   "cook_time": <>,
+#   "total_time": <>,
+#   "active_time": <>,
+#   "subrecipes_ids": [],
+#   "categories": [],
+#   "link": <>,
+#   "img": <>
+# }
+@ app.route("/getRecipe", methods=["POST"])
+def get_recipe():
+    req = request.get_json()
+
+    return jsonify({"res": collection_ref.document(req["id"]).get().to_dict()})
+
+
+# adds recipes to database given recipe details
+#
+# sample request:
+# {
+#   "name": <>,                         (optional)
+#   "author": <>,                       (optional)
+#   "cuisine": <>,                      (optional)
+#   "ingredients": [...],               (optional)
+#   "optional_ingredients": [...],      (optional)
+#   "prep_time": <>,                    (optional)
+#   "wait_time": <>,                    (optional)
+#   "cook_time": <>,                    (optional)
+#   "total_time": <>,                   (optional)
+#   "active_time": <>,                  (optional)
+#   "subrecipes_ids": [],               (optional)
+#   "categories": [],                   (optional)
+#   "link": <>,                         (optional)
+#   "img": <>                           (optional)
+# }
+# sample response:
+# {
+#   "res": "recipe added"
+# }
+@ app.route("/add", methods=["POST"])
+def add_recipe():
+    req = request.get_json()
+    collection_ref.add(Recipe.from_dict(req).to_dict())
+
+    return jsonify({"res": "recipe added"})
+
+
+# updates recipe in database given new recipe details and id
+# sample request:
+# {
+#   "id": <>                            (required)
+#   "name": <>,                         (optional)
+#   "author": <>,                       (optional)
+#   "cuisine": <>,                      (optional)
+#   "ingredients": [...],               (optional)
+#   "optional_ingredients": [...],      (optional)
+#   "prep_time": <>,                    (optional)
+#   "wait_time": <>,                    (optional)
+#   "cook_time": <>,                    (optional)
+#   "total_time": <>,                   (optional)
+#   "active_time": <>,                  (optional)
+#   "subrecipes_ids": [],               (optional)
+#   "categories": [],                   (optional)
+#   "link": <>,                         (optional)
+#   "img": <>                           (optional)
+# }
+# sample response:
+# {
+#   "res": "recipe updated"
+# }
+@ app.route("/update", methods=["POST"])
+def update_recipe():
+    req = request.get_json()
+    doc_id = req["id"]
+    doc_ref = collection_ref.document(doc_id)
+    # doc_ref.update(Recipe.from_dict(req).to_dict())
+    doc_ref.update(req)
+
+    return jsonify({"res": f"recipe updated"})
+
+
+# deletes recipe from database given id
+#
+# sample request:
+# {
+#   "id": <>    (required)
+# }
+#
+# sample response:
+# {
+#   "res": "recipe deleted"
+# }
+@ app.route("/delete", methods=["DELETE"])
+def delete_recipe():
+    req = request.get_json()
+    doc_id = req["id"]
+    collection_ref.document(doc_id).delete()
+
+    return jsonify({"res": "recipe deleted"})
 
 
 def get_recipes_less_than_time(collection_ref, time, field_name):
@@ -87,14 +214,11 @@ def get_recipes_in_cuisines(collection_ref, cuisines):
     return union
 
 
-# applies filters to find entries below a certain threshold
 def apply_time_filters(query_ref, key, value):
     for i in range(round_to_nearest_fifth(value), 0, -5):
-        query_ref = query_ref.where(key, '<=', i)
+        query_ref = query_ref.where(key, "<=", i)
 
     return query_ref
-
-# rounds given value to nearest fifth
 
 
 def round_to_nearest_fifth(value):
@@ -102,49 +226,6 @@ def round_to_nearest_fifth(value):
         return value - value % 5
     else:
         return value + 5 - value % 5
-
-
-@ app.route('/getRecipe', methods=['POST'])
-def get_recipe():
-    req = request.get_json()
-
-    return jsonify({"res": collection_ref.document(req['id']).get().to_dict()})
-
-# adds a recipe to database given various arguments
-
-
-@ app.route('/add', methods=['POST'])
-def add_recipe():
-    req = request.get_json()
-    collection_ref.add(Recipe.from_dict(req).to_dict())
-
-    return jsonify({"res": "recipe added"})
-
-# updates a recipe given a document id and fields to update
-
-
-@ app.route('/update', methods=['PUT'])
-def update_recipe():
-    req = request.get_json()
-    doc_id = req['id']
-    doc_ref = collection_ref.document(doc_id)
-    doc_ref.update(Recipe.from_dict(req).to_dict())
-
-    return jsonify({"res": f"recipe {doc_id} updated"})
-
-# deletes recipe from database given a document id
-# {'id': ...}
-
-
-@ app.route('/delete', methods=['DELETE'])
-def delete_recipe():
-    req = request.get_json()
-    doc_id = req['id']
-    collection_ref.document(doc_id).delete()
-
-    return jsonify({"res": f"recipe {doc_id} deleted"})
-
-# represents a recipe in the database
 
 
 class Recipe:
@@ -177,10 +258,10 @@ class Recipe:
         recipe = Recipe()
 
         for key in source_dict:
-            if key in ['name', 'author', 'cuisine', 'ingredients',
-                       'optional_ingredients', 'prep_time', 'wait_time',
-                       'cook_time', 'subrecipes_ids', 'categories',
-                       'link', 'img']:
+            if key in ["name", "author", "cuisine", "ingredients",
+                       "optional_ingredients", "prep_time", "wait_time",
+                       "cook_time", "subrecipes_ids", "categories",
+                       "link", "img"]:
                 setattr(recipe, key, source_dict[key])
 
         recipe.total_time = int(recipe.prep_time) + int(recipe.wait_time) + int(recipe.cook_time)

@@ -3,7 +3,7 @@ import "bootstrap/dist/css/bootstrap.min.css";
 import Card from "react-bootstrap/Card";
 import RecipeModal from "./RecipeModal";
 
-function RecipeCard(props) {
+export default function RecipeOverviewCard(props) {
   const [recipeData, setRecipeData] = useState(null);
   const [showRecipeModal, setShowRecipeModal] = useState(false);
 
@@ -51,5 +51,3 @@ function RecipeCard(props) {
     );
   }
 }
-
-export default RecipeCard;
