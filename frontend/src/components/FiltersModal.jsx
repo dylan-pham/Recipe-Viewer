@@ -16,13 +16,13 @@ export default function FilterModal(props) {
 
   return (
     <>
-      <Modal show={show} onHide={props.onClose} size="lg">
+      <Modal show={show} onHide={() => props.onClose(getFilters())} size="lg">
         <Modal.Header closeButton>
           <Modal.Title>Filters</Modal.Title>
         </Modal.Header>
         <Modal.Body>
-          <Tabs defaultActiveKey="profile" id="uncontrolled-tab-example">
-            <Tab eventKey="home" title="Author">
+          <Tabs defaultActiveKey="author" id="uncontrolled-tab-example">
+            <Tab eventKey="author" title="Author">
               <Form id="authorsSelector">
                 <Form.Check type={"checkbox"} name="Khoi" label="Khoi" />
                 <Form.Check
@@ -121,19 +121,6 @@ export default function FilterModal(props) {
             </Tab>
           </Tabs>
         </Modal.Body>
-        <Modal.Footer>
-          <Button variant="secondary" onClick={() => props.onClose({})}>
-            Close
-          </Button>
-          <Button
-            variant="primary"
-            onClick={() => {
-              props.onClose(getFilters());
-            }}
-          >
-            Apply Filters
-          </Button>
-        </Modal.Footer>
       </Modal>
     </>
   );
