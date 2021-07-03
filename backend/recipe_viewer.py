@@ -65,6 +65,7 @@ def index():
 #
 # sample response:
 # {
+#   "id": <>,
 #   "name": <>,
 #   "author": <>,
 #   "cuisine": <>,
@@ -75,7 +76,6 @@ def index():
 #   "cook_time": <>,
 #   "total_time": <>,
 #   "active_time": <>,
-#   "subrecipes_ids": [],
 #   "categories": [],
 #   "link": <>,
 #   "img": <>
@@ -84,7 +84,10 @@ def index():
 def get_recipe():
     req = request.get_json()
 
-    return jsonify({"res": collection_ref.document(req["id"]).get().to_dict()})
+    temp = collection_ref.document(req["id"]).get().to_dict()
+    temp["id"] = req["id"]
+
+    return jsonify({"res": temp})
 
 
 # adds recipes to database given recipe details
@@ -101,7 +104,6 @@ def get_recipe():
 #   "cook_time": <>,                    (optional)
 #   "total_time": <>,                   (optional)
 #   "active_time": <>,                  (optional)
-#   "subrecipes_ids": [],               (optional)
 #   "categories": [],                   (optional)
 #   "link": <>,                         (optional)
 #   "img": <>                           (optional)
@@ -132,7 +134,6 @@ def add_recipe():
 #   "cook_time": <>,                    (optional)
 #   "total_time": <>,                   (optional)
 #   "active_time": <>,                  (optional)
-#   "subrecipes_ids": [],               (optional)
 #   "categories": [],                   (optional)
 #   "link": <>,                         (optional)
 #   "img": <>                           (optional)
@@ -231,7 +232,7 @@ def round_to_nearest_fifth(value):
 class Recipe:
     def __init__(self, name="unknown", author="unknown", cuisine="unknown",
                  ingredients=[], optional_ingredients=[], prep_time=0,
-                 wait_time=0, cook_time=0, subrecipes_ids={}, categories=[],
+                 wait_time=0, cook_time=0, categories=[],
                  link="", img="https://upload.wikimedia.org/wikipedia/commons/thumb/a/ac/No_image_available.svg/1024px-No_image_available.svg.png"):
         self.name = name
         self.author = author
@@ -243,7 +244,6 @@ class Recipe:
         self.cook_time = cook_time
         self.total_time = prep_time + wait_time + cook_time
         self.active_time = prep_time + cook_time
-        self.subrecipes_ids = subrecipes_ids
         self.categories = categories
         self.link = link
         self.img = img
@@ -260,7 +260,7 @@ class Recipe:
         for key in source_dict:
             if key in ["name", "author", "cuisine", "ingredients",
                        "optional_ingredients", "prep_time", "wait_time",
-                       "cook_time", "subrecipes_ids", "categories",
+                       "cook_time", "categories",
                        "link", "img"]:
                 setattr(recipe, key, source_dict[key])
 
