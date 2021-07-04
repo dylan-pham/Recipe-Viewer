@@ -9,6 +9,18 @@ import InputGroup from "react-bootstrap/InputGroup";
 
 export default function FilterModal(props) {
   const [show, setShow] = useState(props.visible);
+  const [filters, setFilters] = useState(null);
+
+  useEffect(() => {
+    fetch("http://127.0.0.1:5000/getFilters", {
+      method: "GET",
+      headers: { "Content-Type": "application/json" },
+    })
+      .then((response) => response.json())
+      .then((data) => {
+        setFilters(data["res"]);
+      });
+  }, []);
 
   useEffect(() => {
     setShow(props.visible);
@@ -24,6 +36,14 @@ export default function FilterModal(props) {
           <Tabs defaultActiveKey="author" id="uncontrolled-tab-example">
             <Tab eventKey="author" title="Author">
               <Form id="authorsSelector">
+                {/* {Object.keys(
+                  filters["author"]
+                    ? "author" in filters && filters !== null
+                    : {}
+                ).map(function (key, index) {
+                  console.log(key);
+                })}
+                ; */}
                 <Form.Check type={"checkbox"} name="Khoi" label="Khoi" />
                 <Form.Check
                   type={"checkbox"}
@@ -75,35 +95,33 @@ export default function FilterModal(props) {
             </Tab>
             <Tab eventKey="time" title="Time">
               <InputGroup>
-                <InputGroup.Text>total time</InputGroup.Text>
+                <label
+                  for="maxActiveTime"
+                  class="form-label"
+                  id="activeTimeLabel"
+                >
+                  Active Time
+                </label>
                 <input
-                  id="maxTotalHours"
-                  type="number"
+                  type="range"
+                  class="form-range"
                   min="0"
-                  max="48"
+                  max="120"
+                  step="5"
+                  id="maxActiveTime"
+                  defaultValue="120"
                 ></input>
-                <InputGroup.Text>:</InputGroup.Text>
+                <label for="maxTotalTime" class="form-label">
+                  Total Time
+                </label>
                 <input
-                  id="maxTotalMinutes"
-                  type="number"
+                  type="range"
+                  class="form-range"
                   min="0"
-                  max="60"
-                ></input>
-              </InputGroup>
-              <InputGroup>
-                <InputGroup.Text>active time</InputGroup.Text>
-                <input
-                  id="maxActiveHours"
-                  type="number"
-                  min="0"
-                  max="24"
-                ></input>
-                <InputGroup.Text>:</InputGroup.Text>
-                <input
-                  id="maxActiveMinutes"
-                  type="number"
-                  min="0"
-                  max="60"
+                  max="120"
+                  step="5"
+                  id="maxTotalTime"
+                  defaultValue="120"
                 ></input>
               </InputGroup>
             </Tab>
@@ -127,20 +145,7 @@ export default function FilterModal(props) {
 }
 
 function getMaxTimeFilter(timeType) {
-  let maxHours = parseInt(
-    document.getElementById("max" + timeType + "Hours").value
-  );
-  let maxMinutes = parseInt(
-    document.getElementById("max" + timeType + "Minutes").value
-  );
-
-  if (isNaN(maxHours)) {
-    return maxMinutes;
-  } else if (isNaN(maxMinutes)) {
-    return maxHours * 60;
-  } else {
-    return maxHours * 60 + maxMinutes;
-  }
+  return document.getElementById("max" + timeType + "Time").value;
 }
 
 function getValuesToFilter(formId) {

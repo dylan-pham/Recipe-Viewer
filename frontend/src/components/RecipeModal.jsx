@@ -8,10 +8,19 @@ import RecipeEditCard from "./RecipeEditCard";
 function RecipeModal(props) {
   const [show, setShow] = useState(props.visible);
   const [editMode, setEditMode] = useState(false);
+  const [tempRecipeData, setTempRecipeData] = useState(props.recipeData);
 
   useEffect(() => {
     setShow(props.visible);
   }, [props.visible]);
+
+  function updateRecipe() {
+    fetch("http://127.0.0.1:5000/update", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(tempRecipeData),
+    });
+  }
 
   return (
     <div class="card border-0">
@@ -27,13 +36,24 @@ function RecipeModal(props) {
         </Modal.Header>
         <Modal.Body>
           {editMode ? (
-            <RecipeEditCard recipeData={props.recipeData} />
+            <RecipeEditCard
+              recipeData={props.recipeData}
+              updateRecipeData={(k, v) => {
+                tempRecipeData[k] = v;
+              }}
+            />
           ) : (
             <RecipeDetailsCard recipeData={props.recipeData} />
           )}
         </Modal.Body>
         <Modal.Footer>
-          <Button onClick={() => (editMode ? alert() : setEditMode(true))}>
+          <Button
+            onClick={() =>
+              editMode
+                ? (updateRecipe(), props.onClose(), setEditMode(false))
+                : setEditMode(true)
+            }
+          >
             {editMode ? "Apply Changes" : "Edit"}
           </Button>
         </Modal.Footer>

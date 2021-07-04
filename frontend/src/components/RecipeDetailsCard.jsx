@@ -44,15 +44,6 @@ export default function RecipeDetailsCard(props) {
                 {props.recipeData["optional_ingredients"].map((ingredient) => {
                   return <li>{ingredient + " (optional)"}</li>;
                 })}
-                {Object.entries(props.recipeData["subrecipes_ids"]).map(
-                  (recipeName, recipeId) => {
-                    return (
-                      <li>
-                        <a href={recipeId}>{recipeName}</a>
-                      </li>
-                    );
-                  }
-                )}
               </ul>
             </Card.Text>
           </ListGroup.Item>

@@ -37,11 +37,6 @@ export default function AddRecipeModal(props) {
               id="optional_ingredients"
               placeholder="Optional Ingredients"
             />
-            <Form.Control
-              type="text"
-              id="subrecipes_ids"
-              placeholder="Subrecipe IDs(<recipe>-<recipe id>, ...)"
-            />
             <br />
             <Form.Control id="img" type="text" placeholder="Image Link" />
             <Form.Control id="link" type="text" placeholder="Recipe Link" />
@@ -101,15 +96,6 @@ function processFormData() {
       recipeData[field] = value.split(", ");
     }
   });
-
-  const value = document.getElementById("subrecipes_ids").value;
-  if (value.length !== 0) {
-    recipeData["subrecipes_ids"] = value.split(", ").map((data) => {
-      const temp = {};
-      temp[data.split("-")[0]] = data.split("-")[1];
-      return temp;
-    });
-  }
 
   return recipeData;
 }

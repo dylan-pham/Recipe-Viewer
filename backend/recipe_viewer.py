@@ -3,6 +3,7 @@ from flask_cors import CORS
 import firebase_admin
 from firebase_admin import credentials
 from firebase_admin import firestore
+import re
 
 cred = credentials.Certificate("recipes-312722-5dd21da0fa79.json")
 firebase_admin.initialize_app(cred)
@@ -90,6 +91,17 @@ def get_recipe():
     return jsonify({"res": temp})
 
 
+@ app.route("/getFilters", methods=["GET"])
+def get_filters():
+    res = {}
+    res["author"] = db.collection("recipe_details_counter").document("author").get().to_dict()
+    res["categories"] = db.collection("recipe_details_counter").document("categories").get().to_dict()
+    res["cuisine"] = db.collection("recipe_details_counter").document("cuisine").get().to_dict()
+    res["ingredients"] = db.collection("recipe_details_counter").document("ingredients").get().to_dict()
+
+    return jsonify({"res": res})
+
+
 # adds recipes to database given recipe details
 #
 # sample request:
@@ -174,7 +186,7 @@ def delete_recipe():
 
 
 def get_recipes_less_than_time(collection_ref, time, field_name):
-    return map(lambda doc: doc.id, collection_ref.where(field_name, "<=", time).stream())
+    return map(lambda doc: doc.id, collection_ref.where(field_name, "<=", int(time)).stream())
 
 
 def get_recipes_in_categories(collection_ref, categories):
@@ -268,3 +280,29 @@ class Recipe:
         recipe.active_time = int(recipe.prep_time) + int(recipe.cook_time)
 
         return recipe
+
+
+def generate_recipe_detail_counts():
+    target_collection = db.collection("recipe_details_counter")
+    for doc in collection_ref.stream():
+        target_collection.document("author").update(
+            {re.sub('[^0-9a-zA-Z]+', '_', doc.get("author")): firestore.Increment(1)})
+
+        target_collection.document("cuisine").update(
+            {re.sub('[^0-9a-zA-Z]+', '_', doc.get("cuisine")): firestore.Increment(1)})
+
+        for cat in doc.get("categories"):
+            target_collection.document("categories").update({re.sub('[^0-9a-zA-Z]+', '_', cat): firestore.Increment(1)})
+
+        for ing in doc.get("ingredients"):
+            target_collection.document("ingredients").update(
+                {re.sub('[^0-9a-zA-Z]+', '_', ing): firestore.Increment(1)})
+
+
+def reset_recipe_detail_counts():
+    for doc in db.collection("recipe_details_counter").stream():
+        doc.reference.set({})
+
+
+# reset_recipe_detail_counts()
+# generate_recipe_detail_counts()

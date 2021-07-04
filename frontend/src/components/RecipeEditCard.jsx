@@ -1,35 +1,99 @@
 import Card from "react-bootstrap/Card";
 import ListGroup from "react-bootstrap/ListGroup";
 import FormControl from "react-bootstrap/FormControl";
+import React, { useState, useEffect } from "react";
 
 export default function RecipeEditCard(props) {
   return (
     <Card style={{ width: "100%" }}>
       Image Link
-      <FormControl value={props.recipeData["img"]} />
+      <FormControl
+        defaultValue={props.recipeData["img"]}
+        id="imgLink"
+        onChange={() =>
+          props.updateRecipeData(
+            "img",
+            document.getElementById("imgLink").value
+          )
+        }
+      />
       <Card.Body>
         <ListGroup variant="flush">
           <ListGroup.Item>
             Recipe Name
-            <FormControl value={props.recipeData["name"]} />
+            <FormControl
+              id="name"
+              defaultValue={props.recipeData["name"]}
+              onChange={() =>
+                props.updateRecipeData(
+                  "name",
+                  document.getElementById("name").value
+                )
+              }
+            />
             Author
-            <FormControl value={props.recipeData["author"]} />
+            <FormControl
+              id="author"
+              defaultValue={props.recipeData["author"]}
+              onChange={() =>
+                props.updateRecipeData(
+                  "author",
+                  document.getElementById("author").value
+                )
+              }
+            />
             Cuisine
-            <FormControl value={props.recipeData["cuisine"]} />
+            <FormControl
+              defaultValue={props.recipeData["cuisine"]}
+              id="cuisine"
+              onChange={() =>
+                props.updateRecipeData(
+                  "cuisine",
+                  document.getElementById("cuisine").value
+                )
+              }
+            />
           </ListGroup.Item>
           <ListGroup.Item>
             <ul>
               <li>
                 Prep Time
-                <FormControl value={props.recipeData["prep_time"]} />
+                <FormControl
+                  id="prep"
+                  defaultValue={props.recipeData["prep_time"]}
+                  onChange={() =>
+                    props.updateRecipeData(
+                      "prep_time",
+                      document.getElementById("prep").value
+                    )
+                  }
+                />
               </li>
               <li>
                 Wait Time
-                <FormControl value={props.recipeData["wait_time"]} />
+                <FormControl
+                  id="wait"
+                  defaultValue={props.recipeData["wait_time"]}
+                  onChange={() =>
+                    props.updateRecipeData(
+                      "wait_time",
+                      document.getElementById("wait").value
+                    )
+                  }
+                />
               </li>
               <li>
                 Cook Time
-                <FormControl value={props.recipeData["cook_time"]} />
+                <FormControl
+                  id="cook"
+                  defaulValue={props.recipeData["cook_time"]}
+                  onChange={() =>
+                    props.updateRecipeData(
+                      "cook_time",
+                      document.getElementById("cook").value
+                    )
+                  }
+                />
               </li>
             </ul>
           </ListGroup.Item>
@@ -37,43 +101,64 @@ export default function RecipeEditCard(props) {
             <Card.Text>
               Ingredients
               <FormControl
+                id="ingredients"
                 as="textarea"
-                value={formatList(props.recipeData["ingredients"])}
+                defaultValue={formatList(props.recipeData["ingredients"])}
+                onChange={() =>
+                  props.updateRecipeData(
+                    "ingredients",
+                    convertToList(document.getElementById("ingredients").value)
+                  )
+                }
               />
               Optional Ingredients
               <FormControl
+                id="optIngredients"
                 as="textarea"
-                value={formatList(props.recipeData["optional_ingredients"])}
+                defaultValue={formatList(
+                  props.recipeData["optional_ingredients"]
+                )}
+                onChange={() =>
+                  props.updateRecipeData(
+                    "optional_ingredients",
+                    convertToList(
+                      document.getElementById("optIngredients").value
+                    )
+                  )
+                }
               />
-              Subrecipes
-              <FormControl as="textarea" value={formatSubrecipes(props)} />
             </Card.Text>
           </ListGroup.Item>
           <ListGroup.Item>
             Recipe Link
-            <FormControl as="textarea" value={props.recipeData["link"]} />
+            <FormControl
+              id="recipeLink"
+              as="textarea"
+              defaultValue={props.recipeData["link"]}
+              onChange={() =>
+                props.updateRecipeData(
+                  "link",
+                  document.getElementById("recipeLink").value
+                )
+              }
+            />
             Categories
             <FormControl
+              id="cats"
               as="textarea"
-              value={formatList(props.recipeData["categories"])}
+              defaultValue={formatList(props.recipeData["categories"])}
+              onChange={() =>
+                props.updateRecipeData(
+                  "categories",
+                  convertToList(document.getElementById("cats").value)
+                )
+              }
             />
           </ListGroup.Item>
         </ListGroup>
       </Card.Body>
     </Card>
   );
-}
-
-function formatSubrecipes(props) {
-  let formattedSubrecipes = "";
-
-  Object.entries(props.recipeData["subrecipes_ids"]).forEach(
-    (recipeName, recipeId) => {
-      formatSubrecipes += recipeName + "-" + recipeId + ", ";
-    }
-  );
-
-  return formattedSubrecipes;
 }
 
 function formatList(list) {
@@ -84,4 +169,8 @@ function formatList(list) {
   });
 
   return formattedList;
+}
+
+function convertToList(listAsStr) {
+  return listAsStr.split(", ");
 }
