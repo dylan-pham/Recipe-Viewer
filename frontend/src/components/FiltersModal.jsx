@@ -26,122 +26,109 @@ export default function FilterModal(props) {
     setShow(props.visible);
   }, [props.visible]);
 
-  return (
-    <>
-      <Modal show={show} onHide={() => props.onClose(getFilters())} size="lg">
-        <Modal.Header closeButton>
-          <Modal.Title>Filters</Modal.Title>
-        </Modal.Header>
-        <Modal.Body>
-          <Tabs defaultActiveKey="author" id="uncontrolled-tab-example">
-            <Tab eventKey="author" title="Author">
-              <Form id="authorsSelector">
-                {/* {Object.keys(
-                  filters["author"]
-                    ? "author" in filters && filters !== null
-                    : {}
-                ).map(function (key, index) {
-                  console.log(key);
-                })}
-                ; */}
-                <Form.Check type={"checkbox"} name="Khoi" label="Khoi" />
-                <Form.Check
-                  type={"checkbox"}
-                  name="Hungry Huy"
-                  label="Hungry Huy"
-                />
-                <Form.Check
-                  type={"checkbox"}
-                  name="Gordon Ramsay"
-                  label="Gordon Ramsay"
-                />
-                <Form.Check
-                  type={"checkbox"}
-                  name="Jamie Oliver"
-                  label="Jamie Oliver"
-                />
-              </Form>
-            </Tab>
-            <Tab eventKey="cuisine" title="Cuisine">
-              <Form id="cuisinesSelector">
-                <Form.Check
-                  type={"checkbox"}
-                  name="Vietnamese"
-                  label="Vietnamese"
-                />
-                <Form.Check type={"checkbox"} name="Italian" label="Italian" />
-                <Form.Check
-                  type={"checkbox"}
-                  name="American"
-                  label="American"
-                />
-                <Form.Check
-                  type={"checkbox"}
-                  name="Japanese"
-                  label="Japanese"
-                />
-              </Form>
-            </Tab>
-            <Tab eventKey="ingredients" title="Ingredients">
-              <Form id="ingredientsSelector">
-                <Form.Check type={"checkbox"} name="tomato" label="tomato" />
-                <Form.Check type={"checkbox"} name="lettuce" label="lettuce" />
-                <Form.Check
-                  type={"checkbox"}
-                  name="bread flour"
-                  label="bread flour"
-                />
-              </Form>
-            </Tab>
-            <Tab eventKey="time" title="Time">
-              <InputGroup>
-                <label
-                  for="maxActiveTime"
-                  class="form-label"
-                  id="activeTimeLabel"
-                >
-                  Active Time
-                </label>
-                <input
-                  type="range"
-                  class="form-range"
-                  min="0"
-                  max="120"
-                  step="5"
-                  id="maxActiveTime"
-                  defaultValue="120"
-                ></input>
-                <label for="maxTotalTime" class="form-label">
-                  Total Time
-                </label>
-                <input
-                  type="range"
-                  class="form-range"
-                  min="0"
-                  max="120"
-                  step="5"
-                  id="maxTotalTime"
-                  defaultValue="120"
-                ></input>
-              </InputGroup>
-            </Tab>
-            <Tab eventKey="contact" title="Categories">
-              <Form id="categoriesSelector">
-                <Form.Check type={"checkbox"} name="soup" label="soup" />
-                <Form.Check
-                  type={"checkbox"}
-                  name="rice dish"
-                  label="rice dish"
-                />
-                <Form.Check type={"checkbox"} name="seafood" label="seafood" />
-                <Form.Check type={"checkbox"} name="pork" label="pork" />
-              </Form>
-            </Tab>
-          </Tabs>
-        </Modal.Body>
-      </Modal>
-    </>
-  );
+  if (filters === null) {
+    return <div></div>;
+  } else {
+    return (
+      <>
+        <Modal show={show} onHide={() => props.onClose(getFilters())} size="lg">
+          <Modal.Header closeButton>
+            <Modal.Title>Filters</Modal.Title>
+          </Modal.Header>
+          <Modal.Body>
+            <Tabs defaultActiveKey="author" id="uncontrolled-tab-example">
+              <Tab eventKey="author" title="Author">
+                <Form id="authorsSelector">
+                  {Object.entries(filters["author"]).map(([key, value]) => {
+                    return (
+                      <Form.Check
+                        type={"checkbox"}
+                        name={key.replaceAll("_", " ")}
+                        label={key.replaceAll("_", " ") + " (" + value + ")"}
+                      />
+                    );
+                  })}
+                </Form>
+              </Tab>
+              <Tab eventKey="cuisine" title="Cuisine">
+                <Form id="cuisinesSelector">
+                  {Object.entries(filters["cuisine"]).map(([key, value]) => {
+                    return (
+                      <Form.Check
+                        type={"checkbox"}
+                        name={key.replaceAll("_", " ")}
+                        label={key.replaceAll("_", " ") + " (" + value + ")"}
+                      />
+                    );
+                  })}
+                </Form>
+              </Tab>
+              <Tab eventKey="ingredients" title="Ingredients">
+                <Form id="ingredientsSelector">
+                  {Object.entries(filters["ingredients"]).map(
+                    ([key, value]) => {
+                      return (
+                        <Form.Check
+                          type={"checkbox"}
+                          name={key.replaceAll("_", " ")}
+                          label={key.replaceAll("_", " ") + " (" + value + ")"}
+                        />
+                      );
+                    }
+                  )}
+                </Form>
+              </Tab>
+              <Tab eventKey="time" title="Time">
+                <InputGroup>
+                  <label
+                    for="maxActiveTime"
+                    class="form-label"
+                    id="activeTimeLabel"
+                  >
+                    Active Time
+                  </label>
+                  <input
+                    type="range"
+                    class="form-range"
+                    min="0"
+                    max="120"
+                    step="5"
+                    id="maxActiveTime"
+                    defaultValue="120"
+                  ></input>
+                  <label for="maxTotalTime" class="form-label">
+                    Total Time
+                  </label>
+                  <input
+                    type="range"
+                    class="form-range"
+                    min="0"
+                    max="120"
+                    step="5"
+                    id="maxTotalTime"
+                    defaultValue="120"
+                  ></input>
+                </InputGroup>
+              </Tab>
+              <Tab eventKey="contact" title="Categories">
+                <Form id="categoriesSelector">
+                  {Object.entries(filters["categories"]).map(([key, value]) => {
+                    return (
+                      <Form.Check
+                        type={"checkbox"}
+                        name={key.replaceAll("_", " ")}
+                        label={key.replaceAll("_", " ") + " (" + value + ")"}
+                      />
+                    );
+                  })}
+                </Form>
+              </Tab>
+            </Tabs>
+          </Modal.Body>
+        </Modal>
+      </>
+    );
+  }
 }
 
 function getMaxTimeFilter(timeType) {
