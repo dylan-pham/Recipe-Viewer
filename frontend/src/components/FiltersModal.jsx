@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from "react";
 import "bootstrap/dist/css/bootstrap.min.css";
-import Button from "react-bootstrap/Button";
 import Modal from "react-bootstrap/Modal";
 import Tab from "react-bootstrap/Tab";
 import Tabs from "react-bootstrap/Tabs";
@@ -10,6 +9,7 @@ import InputGroup from "react-bootstrap/InputGroup";
 export default function FilterModal(props) {
   const [show, setShow] = useState(props.visible);
   const [filters, setFilters] = useState(null);
+  const [checkedFilters, setCheckedFilters] = useState([]);
 
   useEffect(() => {
     fetch("http://127.0.0.1:5000/getFilters", {
@@ -25,6 +25,90 @@ export default function FilterModal(props) {
   useEffect(() => {
     setShow(props.visible);
   }, [props.visible]);
+
+  // React.useEffect(() => {
+  //   const temp =
+  //     localStorage.getItem("foo") !== null && localStorage.getItem("foo") !== ""
+  //       ? JSON.parse(localStorage.getItem("foo"))
+  //       : [];
+  //   setCheckedFilters(temp);
+  //   alert();
+  // }, []);
+
+  function getMaxTimeFilter(timeType) {
+    return document.getElementById("max" + timeType + "Time").value;
+  }
+
+  function getValuesToFilter(formId) {
+    let values = [];
+    Array.from(document.getElementById(formId).elements).forEach((element) => {
+      if (element.checked) {
+        values.push(element.getAttribute("name"));
+      }
+    });
+
+    // let temp = [];
+    // if (values.length !== 0) {
+    //   temp = temp.concat(values);
+    // }
+    // if (checkedFilters.length !== 0) {
+    //   temp = temp.concat(checkedFilters);
+    // }
+    // setCheckedFilters(temp);
+    // localStorage.setItem("foo", JSON.stringify(temp));
+
+    return values;
+  }
+
+  function getFilters() {
+    setCheckedFilters([]);
+
+    let filters = {};
+
+    let categoriesToFilter = getValuesToFilter("categoriesSelector");
+    let authorsToFilter = getValuesToFilter("authorsSelector");
+    let cuisinesToFilter = getValuesToFilter("cuisinesSelector");
+    let ingredientsToFilter = getValuesToFilter("ingredientsSelector");
+    let maxTotalTime = getMaxTimeFilter("Total");
+    let maxActiveTime = getMaxTimeFilter("Active");
+
+    if (categoriesToFilter.length !== 0) {
+      filters["categories"] = categoriesToFilter;
+    }
+    if (authorsToFilter.length !== 0) {
+      filters["author"] = authorsToFilter;
+    }
+    if (cuisinesToFilter.length !== 0) {
+      filters["cuisine"] = cuisinesToFilter;
+    }
+    if (ingredientsToFilter.length !== 0) {
+      filters["ingredients"] = ingredientsToFilter;
+    }
+    if (!isNaN(maxTotalTime)) {
+      filters["total_time"] = maxTotalTime;
+    }
+    if (!isNaN(maxActiveTime)) {
+      filters["active_time"] = maxActiveTime;
+    }
+
+    let temp = [];
+    categoriesToFilter.forEach((x) => {
+      temp.push(x);
+    });
+    authorsToFilter.forEach((x) => {
+      temp.push(x);
+    });
+    ingredientsToFilter.forEach((x) => {
+      temp.push(x);
+    });
+    cuisinesToFilter.forEach((x) => {
+      temp.push(x);
+    });
+
+    setCheckedFilters(temp);
+
+    return filters;
+  }
 
   if (filters === null) {
     return <div></div>;
@@ -45,6 +129,9 @@ export default function FilterModal(props) {
                         type={"checkbox"}
                         name={key.replaceAll("_", " ")}
                         label={key.replaceAll("_", " ") + " (" + value + ")"}
+                        defaultChecked={checkedFilters.includes(
+                          key.replaceAll("_", " ")
+                        )}
                       />
                     );
                   })}
@@ -58,6 +145,9 @@ export default function FilterModal(props) {
                         type={"checkbox"}
                         name={key.replaceAll("_", " ")}
                         label={key.replaceAll("_", " ") + " (" + value + ")"}
+                        defaultChecked={checkedFilters.includes(
+                          key.replaceAll("_", " ")
+                        )}
                       />
                     );
                   })}
@@ -72,6 +162,9 @@ export default function FilterModal(props) {
                           type={"checkbox"}
                           name={key.replaceAll("_", " ")}
                           label={key.replaceAll("_", " ") + " (" + value + ")"}
+                          defaultChecked={checkedFilters.includes(
+                            key.replaceAll("_", " ")
+                          )}
                         />
                       );
                     }
@@ -118,6 +211,9 @@ export default function FilterModal(props) {
                         type={"checkbox"}
                         name={key.replaceAll("_", " ")}
                         label={key.replaceAll("_", " ") + " (" + value + ")"}
+                        defaultChecked={checkedFilters.includes(
+                          key.replaceAll("_", " ")
+                        )}
                       />
                     );
                   })}
@@ -131,49 +227,55 @@ export default function FilterModal(props) {
   }
 }
 
-function getMaxTimeFilter(timeType) {
-  return document.getElementById("max" + timeType + "Time").value;
-}
+// function getMaxTimeFilter(timeType) {
+//   return document.getElementById("max" + timeType + "Time").value;
+// }
 
-function getValuesToFilter(formId) {
-  let values = [];
-  Array.from(document.getElementById(formId).elements).forEach((element) => {
-    if (element.checked) {
-      values.push(element.getAttribute("name"));
-    }
-  });
+// function getValuesToFilter(formId) {
+//   let values = [];
+//   Array.from(document.getElementById(formId).elements).forEach((element) => {
+//     if (element.checked) {
+//       values.push(element.getAttribute("name"));
+//     }
+//   });
 
-  return values;
-}
+//   let temp = checkedFilters;
+//   temp.push(values);
+//   localStorage.setItem("foo", temp);
 
-function getFilters() {
-  let filters = {};
+//   return values;
+// }
 
-  let categoriesToFilter = getValuesToFilter("categoriesSelector");
-  let authorsToFilter = getValuesToFilter("authorsSelector");
-  let cuisinesToFilter = getValuesToFilter("cuisinesSelector");
-  let ingredientsToFilter = getValuesToFilter("ingredientsSelector");
-  let maxTotalTime = getMaxTimeFilter("Total");
-  let maxActiveTime = getMaxTimeFilter("Active");
+// function getFilters() {
+//   setCheckedFilters([]);
 
-  if (categoriesToFilter.length !== 0) {
-    filters["categories"] = categoriesToFilter;
-  }
-  if (authorsToFilter.length !== 0) {
-    filters["author"] = authorsToFilter;
-  }
-  if (cuisinesToFilter.length !== 0) {
-    filters["cuisine"] = cuisinesToFilter;
-  }
-  if (ingredientsToFilter.length !== 0) {
-    filters["ingredients"] = ingredientsToFilter;
-  }
-  if (!isNaN(maxTotalTime)) {
-    filters["total_time"] = maxTotalTime;
-  }
-  if (!isNaN(maxActiveTime)) {
-    filters["active_time"] = maxActiveTime;
-  }
+//   let filters = {};
 
-  return filters;
-}
+//   let categoriesToFilter = getValuesToFilter("categoriesSelector");
+//   let authorsToFilter = getValuesToFilter("authorsSelector");
+//   let cuisinesToFilter = getValuesToFilter("cuisinesSelector");
+//   let ingredientsToFilter = getValuesToFilter("ingredientsSelector");
+//   let maxTotalTime = getMaxTimeFilter("Total");
+//   let maxActiveTime = getMaxTimeFilter("Active");
+
+//   if (categoriesToFilter.length !== 0) {
+//     filters["categories"] = categoriesToFilter;
+//   }
+//   if (authorsToFilter.length !== 0) {
+//     filters["author"] = authorsToFilter;
+//   }
+//   if (cuisinesToFilter.length !== 0) {
+//     filters["cuisine"] = cuisinesToFilter;
+//   }
+//   if (ingredientsToFilter.length !== 0) {
+//     filters["ingredients"] = ingredientsToFilter;
+//   }
+//   if (!isNaN(maxTotalTime)) {
+//     filters["total_time"] = maxTotalTime;
+//   }
+//   if (!isNaN(maxActiveTime)) {
+//     filters["active_time"] = maxActiveTime;
+//   }
+
+//   return filters;
+// }
