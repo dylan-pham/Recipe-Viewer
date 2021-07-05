@@ -227,13 +227,6 @@ def get_recipes_in_cuisines(collection_ref, cuisines):
     return union
 
 
-def apply_time_filters(query_ref, key, value):
-    for i in range(round_to_nearest_fifth(value), 0, -5):
-        query_ref = query_ref.where(key, "<=", i)
-
-    return query_ref
-
-
 def round_to_nearest_fifth(value):
     if value % 5 < 3:
         return value - value % 5
@@ -282,6 +275,23 @@ class Recipe:
         return recipe
 
 
+# def update_recipe_detail_counts():
+#     return
+#     target_collection = db.collection("recipe_details_counter")
+#     target_collection.document("author").update(
+#         {re.sub('[^0-9a-zA-Z]+', '_', doc.get("author")): firestore.Increment(1)})
+
+#     target_collection.document("cuisine").update(
+#         {re.sub('[^0-9a-zA-Z]+', '_', doc.get("cuisine")): firestore.Increment(1)})
+
+#     for cat in doc.get("categories"):
+#         target_collection.document("categories").update({re.sub('[^0-9a-zA-Z]+', '_', cat): firestore.Increment(1)})
+
+#     for ing in doc.get("ingredients"):
+#         target_collection.document("ingredients").update(
+#             {re.sub('[^0-9a-zA-Z]+', '_', ing): firestore.Increment(1)})
+
+
 def generate_recipe_detail_counts():
     target_collection = db.collection("recipe_details_counter")
     for doc in collection_ref.stream():
@@ -298,11 +308,16 @@ def generate_recipe_detail_counts():
             target_collection.document("ingredients").update(
                 {re.sub('[^0-9a-zA-Z]+', '_', ing): firestore.Increment(1)})
 
+        doc.reference.update(
+            {"total_time": doc.get("cook_time") + doc.get("prep_time") + doc.get("wait_time"),
+             "active_time": doc.get("cook_time") + doc.get("prep_time")})
+
 
 def reset_recipe_detail_counts():
     for doc in db.collection("recipe_details_counter").stream():
         doc.reference.set({})
 
 
-# reset_recipe_detail_counts()
-# generate_recipe_detail_counts()
+def regenerate():
+    reset_recipe_detail_counts()
+    generate_recipe_detail_counts()
