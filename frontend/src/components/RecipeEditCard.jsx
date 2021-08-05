@@ -86,7 +86,7 @@ export default function RecipeEditCard(props) {
                 Cook Time
                 <FormControl
                   id="cook"
-                  defaulValue={props.recipeData["cook_time"]}
+                  defaultValue={props.recipeData["cook_time"]}
                   onChange={() =>
                     props.updateRecipeData(
                       "cook_time",
