@@ -119,13 +119,6 @@ export default function FilterModal(props) {
                         defaultChecked={
                           checkedFilters[key.replaceAll("_", " ")]
                         }
-                        // onClick={() =>
-                        //   !document.getElementsByName(key.replaceAll("_", " "))
-                        //     .checked
-                        // }
-                        // onChange={() => {
-                        //   checkedFilters[key] = !checkedFilters[key];
-                        // }}
                       />
                     );
                   })}
@@ -139,9 +132,6 @@ export default function FilterModal(props) {
                         type={"checkbox"}
                         name={key.replaceAll("_", " ")}
                         label={key.replaceAll("_", " ") + " (" + value + ")"}
-                        // defaultChecked={checkedFilters.includes(
-                        //   key.replaceAll("_", " ")
-                        // )}
                       />
                     );
                   })}
@@ -156,9 +146,6 @@ export default function FilterModal(props) {
                           type={"checkbox"}
                           name={key.replaceAll("_", " ")}
                           label={key.replaceAll("_", " ") + " (" + value + ")"}
-                          // defaultChecked={checkedFilters.includes(
-                          //   key.replaceAll("_", " ")
-                          // )}
                         />
                       );
                     }
@@ -169,9 +156,7 @@ export default function FilterModal(props) {
                 <InputGroup>
                   <label class="form-label">Active Time</label>
                   <Slider
-                    // defaultValue={maxActiveTimeValue}
                     value={maxActiveTimeValue}
-                    // getAriaValueText={valuetext}
                     aria-labelledby="discrete-slider"
                     step={5}
                     marks
@@ -184,9 +169,7 @@ export default function FilterModal(props) {
                   />
                   <label class="form-label">Total Time</label>
                   <Slider
-                    // defaultValue={maxTotalTimeValue}
                     value={maxTotalTimeValue}
-                    // getAriaValueText={valuetext}
                     aria-labelledby="discrete-slider"
                     step={5}
                     marks
@@ -214,9 +197,6 @@ export default function FilterModal(props) {
                         type={"checkbox"}
                         name={key.replaceAll("_", " ")}
                         label={key.replaceAll("_", " ") + " (" + value + ")"}
-                        // defaultChecked={checkedFilters.includes(
-                        //   key.replaceAll("_", " ")
-                        // )}
                       />
                     );
                   })}
