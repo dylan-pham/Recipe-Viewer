@@ -6,11 +6,12 @@ import Tabs from "react-bootstrap/Tabs";
 import Form from "react-bootstrap/Form";
 import InputGroup from "react-bootstrap/InputGroup";
 import Slider from "@material-ui/core/Slider";
+import Button from "react-bootstrap/Button";
 
 export default function FilterModal(props) {
   const [show, setShow] = useState(props.visible);
   const [filters, setFilters] = useState(null);
-  const [checkedFilters, setCheckedFilters] = useState([]);
+  const [checkedFilters, setCheckedFilters] = useState({});
   const [maxTotalTimeValue, setMaxTotalTimeValue] = useState(300);
   const [maxActiveTimeValue, setMaxActiveTimeValue] = useState(300);
   const [showAll, setShowAll] = useState(false);
@@ -23,6 +24,11 @@ export default function FilterModal(props) {
       .then((response) => response.json())
       .then((data) => {
         setFilters(data["res"]);
+        Object.keys(data["res"]).forEach((x) => {
+          Object.keys(data["res"][x]).forEach((y) => {
+            checkedFilters[y] = false;
+          });
+        });
       });
   }, []);
 
@@ -41,12 +47,10 @@ export default function FilterModal(props) {
     return values;
   }
 
-  function valuetext(value) {
-    return `${value}°C`;
-  }
-
   function getFilters() {
-    setCheckedFilters([]);
+    Object.keys(checkedFilters).forEach((key) => {
+      checkedFilters[key] = false;
+    });
 
     let filters = {};
 
@@ -76,21 +80,18 @@ export default function FilterModal(props) {
       filters["active_time"] = maxActiveTime;
     }
 
-    let temp = [];
     categoriesToFilter.forEach((x) => {
-      temp.push(x);
+      checkedFilters[x] = true;
     });
     authorsToFilter.forEach((x) => {
-      temp.push(x);
+      checkedFilters[x] = true;
     });
     ingredientsToFilter.forEach((x) => {
-      temp.push(x);
+      checkedFilters[x] = true;
     });
     cuisinesToFilter.forEach((x) => {
-      temp.push(x);
+      checkedFilters[x] = true;
     });
-
-    setCheckedFilters(temp);
 
     return filters;
   }
@@ -113,10 +114,18 @@ export default function FilterModal(props) {
                       <Form.Check
                         type={"checkbox"}
                         name={key.replaceAll("_", " ")}
+                        id={key.replaceAll("_", " ")}
                         label={key.replaceAll("_", " ") + " (" + value + ")"}
-                        defaultChecked={checkedFilters.includes(
-                          key.replaceAll("_", " ")
-                        )}
+                        defaultChecked={
+                          checkedFilters[key.replaceAll("_", " ")]
+                        }
+                        // onClick={() =>
+                        //   !document.getElementsByName(key.replaceAll("_", " "))
+                        //     .checked
+                        // }
+                        // onChange={() => {
+                        //   checkedFilters[key] = !checkedFilters[key];
+                        // }}
                       />
                     );
                   })}
@@ -130,9 +139,9 @@ export default function FilterModal(props) {
                         type={"checkbox"}
                         name={key.replaceAll("_", " ")}
                         label={key.replaceAll("_", " ") + " (" + value + ")"}
-                        defaultChecked={checkedFilters.includes(
-                          key.replaceAll("_", " ")
-                        )}
+                        // defaultChecked={checkedFilters.includes(
+                        //   key.replaceAll("_", " ")
+                        // )}
                       />
                     );
                   })}
@@ -147,9 +156,9 @@ export default function FilterModal(props) {
                           type={"checkbox"}
                           name={key.replaceAll("_", " ")}
                           label={key.replaceAll("_", " ") + " (" + value + ")"}
-                          defaultChecked={checkedFilters.includes(
-                            key.replaceAll("_", " ")
-                          )}
+                          // defaultChecked={checkedFilters.includes(
+                          //   key.replaceAll("_", " ")
+                          // )}
                         />
                       );
                     }
@@ -160,8 +169,9 @@ export default function FilterModal(props) {
                 <InputGroup>
                   <label class="form-label">Active Time</label>
                   <Slider
-                    defaultValue={maxActiveTimeValue}
-                    getAriaValueText={valuetext}
+                    // defaultValue={maxActiveTimeValue}
+                    value={maxActiveTimeValue}
+                    // getAriaValueText={valuetext}
                     aria-labelledby="discrete-slider"
                     step={5}
                     marks
@@ -174,8 +184,9 @@ export default function FilterModal(props) {
                   />
                   <label class="form-label">Total Time</label>
                   <Slider
-                    defaultValue={maxTotalTimeValue}
-                    getAriaValueText={valuetext}
+                    // defaultValue={maxTotalTimeValue}
+                    value={maxTotalTimeValue}
+                    // getAriaValueText={valuetext}
                     aria-labelledby="discrete-slider"
                     step={5}
                     marks
@@ -203,9 +214,9 @@ export default function FilterModal(props) {
                         type={"checkbox"}
                         name={key.replaceAll("_", " ")}
                         label={key.replaceAll("_", " ") + " (" + value + ")"}
-                        defaultChecked={checkedFilters.includes(
-                          key.replaceAll("_", " ")
-                        )}
+                        // defaultChecked={checkedFilters.includes(
+                        //   key.replaceAll("_", " ")
+                        // )}
                       />
                     );
                   })}
@@ -213,61 +224,26 @@ export default function FilterModal(props) {
               </Tab>
             </Tabs>
           </Modal.Body>
+          <Modal.Footer>
+            <Button
+              onClick={() => {
+                setMaxTotalTimeValue(300);
+                setMaxActiveTimeValue(300);
+                Object.keys(checkedFilters).forEach((filter) => {
+                  var x = document.getElementById(filter.replaceAll("_", " "));
+                  if (x !== null) {
+                    // no idea when x could be null
+                    x.checked = false;
+                  }
+                });
+                setShowAll(false);
+              }}
+            >
+              Reset Filters
+            </Button>
+          </Modal.Footer>
         </Modal>
       </>
     );
   }
 }
-
-// function getMaxTimeFilter(timeType) {
-//   return document.getElementById("max" + timeType + "Time").value;
-// }
-
-// function getValuesToFilter(formId) {
-//   let values = [];
-//   Array.from(document.getElementById(formId).elements).forEach((element) => {
-//     if (element.checked) {
-//       values.push(element.getAttribute("name"));
-//     }
-//   });
-
-//   let temp = checkedFilters;
-//   temp.push(values);
-//   localStorage.setItem("foo", temp);
-
-//   return values;
-// }
-
-// function getFilters() {
-//   setCheckedFilters([]);
-
-//   let filters = {};
-
-//   let categoriesToFilter = getValuesToFilter("categoriesSelector");
-//   let authorsToFilter = getValuesToFilter("authorsSelector");
-//   let cuisinesToFilter = getValuesToFilter("cuisinesSelector");
-//   let ingredientsToFilter = getValuesToFilter("ingredientsSelector");
-//   let maxTotalTime = getMaxTimeFilter("Total");
-//   let maxActiveTime = getMaxTimeFilter("Active");
-
-//   if (categoriesToFilter.length !== 0) {
-//     filters["categories"] = categoriesToFilter;
-//   }
-//   if (authorsToFilter.length !== 0) {
-//     filters["author"] = authorsToFilter;
-//   }
-//   if (cuisinesToFilter.length !== 0) {
-//     filters["cuisine"] = cuisinesToFilter;
-//   }
-//   if (ingredientsToFilter.length !== 0) {
-//     filters["ingredients"] = ingredientsToFilter;
-//   }
-//   if (!isNaN(maxTotalTime)) {
-//     filters["total_time"] = maxTotalTime;
-//   }
-//   if (!isNaN(maxActiveTime)) {
-//     filters["active_time"] = maxActiveTime;
-//   }
-
-//   return filters;
-// }
