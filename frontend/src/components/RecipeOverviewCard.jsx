@@ -46,6 +46,8 @@ export default function RecipeOverviewCard(props) {
           visible={showRecipeModal}
           onClose={() => setShowRecipeModal(false)}
           recipeData={recipeData}
+          delete={(id) => props.delete(id)}
+          update={(recipeData) => props.update(recipeData)}
         />
       </>
     );

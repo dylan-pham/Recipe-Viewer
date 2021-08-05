@@ -14,23 +14,6 @@ function RecipeModal(props) {
     setShow(props.visible);
   }, [props.visible]);
 
-  function updateRecipe() {
-    console.log(tempRecipeData);
-    fetch("http://127.0.0.1:5000/update", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(tempRecipeData),
-    });
-  }
-
-  function deleteRecipe() {
-    fetch("http://127.0.0.1:5000/delete", {
-      method: "DELETE",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(tempRecipeData),
-    });
-  }
-
   return (
     <div class="card border-0">
       <Modal
@@ -60,7 +43,9 @@ function RecipeModal(props) {
             <Button
               variant="danger"
               onClick={() => (
-                deleteRecipe(), props.onClose(), setEditMode(false)
+                props.delete(tempRecipeData["id"]),
+                props.onClose(),
+                setEditMode(false)
               )}
             >
               Delete Recipe
@@ -71,7 +56,9 @@ function RecipeModal(props) {
           <Button
             onClick={() =>
               editMode
-                ? (updateRecipe(), props.onClose(), setEditMode(false))
+                ? (props.update(tempRecipeData),
+                  props.onClose(),
+                  setEditMode(false))
                 : setEditMode(true)
             }
           >

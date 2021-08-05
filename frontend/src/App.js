@@ -12,7 +12,7 @@ export default function App() {
   const [showFiltersModal, setShowFiltersModal] = useState(false);
   const [filters, setFilters] = useState({});
 
-  useEffect(() => {
+  function updateRecipes() {
     fetch("http://127.0.0.1:5000/", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -22,6 +22,40 @@ export default function App() {
       .then((data) => {
         setRecipeIds(data["res"]);
       });
+  }
+
+  function deleteRecipe(id) {
+    fetch("http://127.0.0.1:5000/delete", {
+      method: "DELETE",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id: id }),
+    }).then(() => {
+      updateRecipes();
+    });
+  }
+
+  function addRecipe(recipeData) {
+    fetch("http://127.0.0.1:5000/add", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(recipeData),
+    }).then(() => {
+      updateRecipes();
+    });
+  }
+
+  function updateRecipe(recipeData) {
+    fetch("http://127.0.0.1:5000/update", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(recipeData),
+    }).then(() => {
+      updateRecipes();
+    });
+  }
+
+  useEffect(() => {
+    updateRecipes();
   }, [addRecipeModalVisible, filters]);
 
   return (
@@ -37,12 +71,17 @@ export default function App() {
         />
         <Row className="justify-content-center">
           {recipeIds.map((id) => (
-            <RecipeOverviewCard id={id} />
+            <RecipeOverviewCard
+              id={id}
+              delete={(id) => deleteRecipe(id)}
+              update={(recipeData) => updateRecipe(recipeData)}
+            />
           ))}
         </Row>
         <AddRecipeModal
           visible={addRecipeModalVisible}
           onClose={() => setAddRecipeModalVisible(false)}
+          add={(recipeData) => addRecipe(recipeData)}
         />
         <FiltersModal
           visible={showFiltersModal}
