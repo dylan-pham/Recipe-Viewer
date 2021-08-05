@@ -13,6 +13,7 @@ export default function FilterModal(props) {
   const [checkedFilters, setCheckedFilters] = useState([]);
   const [maxTotalTimeValue, setMaxTotalTimeValue] = useState(300);
   const [maxActiveTimeValue, setMaxActiveTimeValue] = useState(300);
+  const [showAll, setShowAll] = useState(false);
 
   useEffect(() => {
     fetch("http://127.0.0.1:5000/getFilters", {
@@ -159,7 +160,7 @@ export default function FilterModal(props) {
                 <InputGroup>
                   <label class="form-label">Active Time</label>
                   <Slider
-                    defaultValue={300}
+                    defaultValue={maxActiveTimeValue}
                     getAriaValueText={valuetext}
                     aria-labelledby="discrete-slider"
                     step={5}
@@ -173,7 +174,7 @@ export default function FilterModal(props) {
                   />
                   <label class="form-label">Total Time</label>
                   <Slider
-                    defaultValue={300}
+                    defaultValue={maxTotalTimeValue}
                     getAriaValueText={valuetext}
                     aria-labelledby="discrete-slider"
                     step={5}
@@ -185,7 +186,12 @@ export default function FilterModal(props) {
                       setMaxTotalTimeValue(newValue)
                     }
                   />
-                  <input type="checkbox" id="showAll"></input>
+                  <input
+                    type="checkbox"
+                    id="showAll"
+                    checked={showAll}
+                    onClick={() => setShowAll(!showAll)}
+                  ></input>
                   <label for="showAll">Show All</label>
                 </InputGroup>
               </Tab>
