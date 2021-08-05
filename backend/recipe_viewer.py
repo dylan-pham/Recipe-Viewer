@@ -159,8 +159,7 @@ def update_recipe():
     req = request.get_json()
     doc_id = req["id"]
     doc_ref = collection_ref.document(doc_id)
-    # doc_ref.update(Recipe.from_dict(req).to_dict())
-    doc_ref.update(req)
+    doc_ref.update(Recipe.from_dict(req).to_dict())
 
     return jsonify({"res": f"recipe updated"})
 

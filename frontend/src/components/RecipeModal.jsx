@@ -15,8 +15,17 @@ function RecipeModal(props) {
   }, [props.visible]);
 
   function updateRecipe() {
+    console.log(tempRecipeData);
     fetch("http://127.0.0.1:5000/update", {
       method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(tempRecipeData),
+    });
+  }
+
+  function deleteRecipe() {
+    fetch("http://127.0.0.1:5000/delete", {
+      method: "DELETE",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(tempRecipeData),
     });
@@ -47,6 +56,18 @@ function RecipeModal(props) {
           )}
         </Modal.Body>
         <Modal.Footer>
+          {editMode ? (
+            <Button
+              variant="danger"
+              onClick={() => (
+                deleteRecipe(), props.onClose(), setEditMode(false)
+              )}
+            >
+              Delete Recipe
+            </Button>
+          ) : (
+            <div> </div>
+          )}
           <Button
             onClick={() =>
               editMode

@@ -5,11 +5,14 @@ import Tab from "react-bootstrap/Tab";
 import Tabs from "react-bootstrap/Tabs";
 import Form from "react-bootstrap/Form";
 import InputGroup from "react-bootstrap/InputGroup";
+import Slider from "@material-ui/core/Slider";
 
 export default function FilterModal(props) {
   const [show, setShow] = useState(props.visible);
   const [filters, setFilters] = useState(null);
   const [checkedFilters, setCheckedFilters] = useState([]);
+  const [maxTotalTimeValue, setMaxTotalTimeValue] = useState(300);
+  const [maxActiveTimeValue, setMaxActiveTimeValue] = useState(300);
 
   useEffect(() => {
     fetch("http://127.0.0.1:5000/getFilters", {
@@ -26,19 +29,6 @@ export default function FilterModal(props) {
     setShow(props.visible);
   }, [props.visible]);
 
-  // React.useEffect(() => {
-  //   const temp =
-  //     localStorage.getItem("foo") !== null && localStorage.getItem("foo") !== ""
-  //       ? JSON.parse(localStorage.getItem("foo"))
-  //       : [];
-  //   setCheckedFilters(temp);
-  //   alert();
-  // }, []);
-
-  function getMaxTimeFilter(timeType) {
-    return document.getElementById("max" + timeType + "Time").value;
-  }
-
   function getValuesToFilter(formId) {
     let values = [];
     Array.from(document.getElementById(formId).elements).forEach((element) => {
@@ -47,17 +37,11 @@ export default function FilterModal(props) {
       }
     });
 
-    // let temp = [];
-    // if (values.length !== 0) {
-    //   temp = temp.concat(values);
-    // }
-    // if (checkedFilters.length !== 0) {
-    //   temp = temp.concat(checkedFilters);
-    // }
-    // setCheckedFilters(temp);
-    // localStorage.setItem("foo", JSON.stringify(temp));
-
     return values;
+  }
+
+  function valuetext(value) {
+    return `${value}°C`;
   }
 
   function getFilters() {
@@ -69,8 +53,8 @@ export default function FilterModal(props) {
     let authorsToFilter = getValuesToFilter("authorsSelector");
     let cuisinesToFilter = getValuesToFilter("cuisinesSelector");
     let ingredientsToFilter = getValuesToFilter("ingredientsSelector");
-    let maxTotalTime = getMaxTimeFilter("Total");
-    let maxActiveTime = getMaxTimeFilter("Active");
+    let maxTotalTime = maxTotalTimeValue;
+    let maxActiveTime = maxActiveTimeValue;
 
     if (categoriesToFilter.length !== 0) {
       filters["categories"] = categoriesToFilter;
@@ -84,10 +68,10 @@ export default function FilterModal(props) {
     if (ingredientsToFilter.length !== 0) {
       filters["ingredients"] = ingredientsToFilter;
     }
-    if (!isNaN(maxTotalTime)) {
+    if (!isNaN(maxTotalTime) && !document.getElementById("showAll").checked) {
       filters["total_time"] = maxTotalTime;
     }
-    if (!isNaN(maxActiveTime)) {
+    if (!isNaN(maxActiveTime) && !document.getElementById("showAll").checked) {
       filters["active_time"] = maxActiveTime;
     }
 
@@ -173,34 +157,36 @@ export default function FilterModal(props) {
               </Tab>
               <Tab eventKey="time" title="Time">
                 <InputGroup>
-                  <label
-                    for="maxActiveTime"
-                    class="form-label"
-                    id="activeTimeLabel"
-                  >
-                    Active Time
-                  </label>
-                  <input
-                    type="range"
-                    class="form-range"
-                    min="0"
-                    max="120"
-                    step="5"
-                    id="maxActiveTime"
-                    defaultValue="120"
-                  ></input>
-                  <label for="maxTotalTime" class="form-label">
-                    Total Time
-                  </label>
-                  <input
-                    type="range"
-                    class="form-range"
-                    min="0"
-                    max="120"
-                    step="5"
-                    id="maxTotalTime"
-                    defaultValue="120"
-                  ></input>
+                  <label class="form-label">Active Time</label>
+                  <Slider
+                    defaultValue={300}
+                    getAriaValueText={valuetext}
+                    aria-labelledby="discrete-slider"
+                    step={5}
+                    marks
+                    min={0}
+                    max={300}
+                    valueLabelDisplay="auto"
+                    onChange={(event, newValue) =>
+                      setMaxActiveTimeValue(newValue)
+                    }
+                  />
+                  <label class="form-label">Total Time</label>
+                  <Slider
+                    defaultValue={300}
+                    getAriaValueText={valuetext}
+                    aria-labelledby="discrete-slider"
+                    step={5}
+                    marks
+                    min={0}
+                    max={300}
+                    valueLabelDisplay="auto"
+                    onChange={(event, newValue) =>
+                      setMaxTotalTimeValue(newValue)
+                    }
+                  />
+                  <input type="checkbox" id="showAll"></input>
+                  <label for="showAll">Show All</label>
                 </InputGroup>
               </Tab>
               <Tab eventKey="contact" title="Categories">
