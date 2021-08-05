@@ -20,6 +20,7 @@ export default function App() {
     })
       .then((response) => response.json())
       .then((data) => {
+        console.log(data);
         setRecipeIds(data["res"]);
       });
   }
@@ -49,14 +50,12 @@ export default function App() {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(recipeData),
-    }).then(() => {
-      updateRecipes();
     });
   }
 
   useEffect(() => {
     updateRecipes();
-  }, [addRecipeModalVisible, filters]);
+  }, [filters]);
 
   return (
     <div className="App">

@@ -3,6 +3,17 @@ import Button from "react-bootstrap/Button";
 import ListGroup from "react-bootstrap/ListGroup";
 
 export default function RecipeDetailsCard(props) {
+  function getTotalTime() {
+    return getActiveTime() + parseInt(props.recipeData["wait_time"]);
+  }
+
+  function getActiveTime() {
+    return (
+      parseInt(props.recipeData["prep_time"]) +
+      parseInt(props.recipeData["cook_time"])
+    );
+  }
+
   return (
     <Card style={{ width: "100%" }}>
       <Card.Img variant="top" src={props.recipeData["img"]} />
@@ -18,9 +29,9 @@ export default function RecipeDetailsCard(props) {
             </Card.Subtitle>
           </ListGroup.Item>
           <ListGroup.Item>
-            {props.recipeData["total_time"] +
+            {getTotalTime() +
               " total time • " +
-              props.recipeData["active_time"] +
+              getActiveTime() +
               " active time"}
             <ul>
               <li>
