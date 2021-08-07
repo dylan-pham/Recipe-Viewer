@@ -7,15 +7,17 @@ import Form from "react-bootstrap/Form";
 import InputGroup from "react-bootstrap/InputGroup";
 import Slider from "@material-ui/core/Slider";
 import Button from "react-bootstrap/Button";
+import Row from "react-bootstrap/Row";
+import Col from "react-bootstrap/Col";
+import Container from "react-bootstrap/Container";
 
 export default function FilterModal(props) {
   const [show, setShow] = useState(props.visible);
   const [filters, setFilters] = useState(null);
-  const [checkedFilters, setCheckedFilters] = useState({});
-  const [maxTotalTimeValue, setMaxTotalTimeValue] = useState(300);
-  const [maxPrepTimeValue, setMaxPrepTimeValue] = useState(300);
-  const [maxCookTimeValue, setMaxCookTimeValue] = useState(300);
-  const [showAll, setShowAll] = useState(false);
+  const [checkedFilters] = useState({});
+  const [maxTotalTimeValue, setMaxTotalTimeValue] = useState([24, 60]);
+  const [maxPrepTimeValue, setMaxPrepTimeValue] = useState([24, 60]);
+  const [maxCookTimeValue, setMaxCookTimeValue] = useState([24, 60]);
 
   useEffect(() => {
     fetch("http://127.0.0.1:5000/getFilters", {
@@ -59,9 +61,9 @@ export default function FilterModal(props) {
     let authorsToFilter = getValuesToFilter("authorsSelector");
     let cuisinesToFilter = getValuesToFilter("cuisinesSelector");
     let ingredientsToFilter = getValuesToFilter("ingredientsSelector");
-    let maxTotalTime = maxTotalTimeValue;
-    let maxPrepTime = maxPrepTimeValue;
-    let maxCookTime = maxCookTimeValue;
+    let maxTotalTime = maxTotalTimeValue[0] * 60 + maxTotalTimeValue[1];
+    let maxPrepTime = maxPrepTimeValue[0] * 60 + maxPrepTimeValue[1];
+    let maxCookTime = maxCookTimeValue[0] * 60 + maxCookTimeValue[1];
 
     if (categoriesToFilter.length !== 0) {
       filters["categories"] = categoriesToFilter;
@@ -75,13 +77,13 @@ export default function FilterModal(props) {
     if (ingredientsToFilter.length !== 0) {
       filters["ingredients"] = ingredientsToFilter;
     }
-    if (!isNaN(maxTotalTime) && !document.getElementById("showAll").checked) {
+    if (!isNaN(maxTotalTime)) {
       filters["total_time"] = maxTotalTime;
     }
-    if (!isNaN(maxPrepTime) && !document.getElementById("showAll").checked) {
+    if (!isNaN(maxPrepTime)) {
       filters["prep_time"] = maxPrepTime;
     }
-    if (!isNaN(maxCookTime) && !document.getElementById("showAll").checked) {
+    if (!isNaN(maxCookTime)) {
       filters["cook_time"] = maxCookTime;
     }
 
@@ -159,52 +161,110 @@ export default function FilterModal(props) {
               </Tab>
               <Tab eventKey="time" title="Time">
                 <InputGroup>
-                  <label class="form-label">Total Time</label>
-                  <Slider
-                    value={maxTotalTimeValue}
-                    aria-labelledby="discrete-slider"
-                    step={5}
-                    marks
-                    min={0}
-                    max={300}
-                    valueLabelDisplay="auto"
-                    onChange={(event, newValue) =>
-                      setMaxTotalTimeValue(newValue)
-                    }
-                  />
-                  <label class="form-label">Prep Time</label>
-                  <Slider
-                    value={maxPrepTimeValue}
-                    aria-labelledby="discrete-slider"
-                    step={5}
-                    marks
-                    min={0}
-                    max={300}
-                    valueLabelDisplay="auto"
-                    onChange={(event, newValue) =>
-                      setMaxPrepTimeValue(newValue)
-                    }
-                  />
-                  <label class="form-label">Cook Time</label>
-                  <Slider
-                    value={maxCookTimeValue}
-                    aria-labelledby="discrete-slider"
-                    step={5}
-                    marks
-                    min={0}
-                    max={300}
-                    valueLabelDisplay="auto"
-                    onChange={(event, newValue) =>
-                      setMaxCookTimeValue(newValue)
-                    }
-                  />
-                  <input
-                    type="checkbox"
-                    id="showAll"
-                    checked={showAll}
-                    onClick={() => setShowAll(!showAll)}
-                  ></input>
-                  <label for="showAll">Show All</label>
+                  <Container>
+                    <Row>
+                      <label class="form-label">Total Time</label>
+                    </Row>
+                    <Row>
+                      <Col>
+                        <Slider
+                          id="test"
+                          value={maxTotalTimeValue[0]}
+                          aria-labelledby="discrete-slider"
+                          step={1}
+                          marks={[{ value: 12, label: "hours" }]}
+                          min={0}
+                          max={24}
+                          valueLabelDisplay="auto"
+                          onChange={(event, newValue) =>
+                            setMaxTotalTimeValue([
+                              newValue,
+                              maxTotalTimeValue[1],
+                            ])
+                          }
+                        />
+                      </Col>
+                      <Col>
+                        <Slider
+                          value={maxTotalTimeValue[1]}
+                          aria-labelledby="discrete-slider"
+                          step={1}
+                          marks={[{ value: 30, label: "minutes" }]}
+                          min={0}
+                          max={60}
+                          valueLabelDisplay="auto"
+                          onChange={(event, newValue) =>
+                            setMaxTotalTimeValue([
+                              maxTotalTimeValue[0],
+                              newValue,
+                            ])
+                          }
+                        />
+                      </Col>
+                    </Row>
+                    <Row>
+                      <label class="form-label">Prep Time</label>
+                    </Row>
+                    <Row>
+                      <Col>
+                        <Slider
+                          value={maxPrepTimeValue[0]}
+                          aria-labelledby="discrete-slider"
+                          step={1}
+                          min={0}
+                          max={24}
+                          valueLabelDisplay="auto"
+                          onChange={(event, newValue) =>
+                            setMaxPrepTimeValue([newValue, maxPrepTimeValue[1]])
+                          }
+                        />
+                      </Col>
+                      <Col>
+                        <Slider
+                          value={maxPrepTimeValue[1]}
+                          aria-labelledby="discrete-slider"
+                          step={1}
+                          min={0}
+                          max={60}
+                          valueLabelDisplay="auto"
+                          onChange={(event, newValue) =>
+                            setMaxPrepTimeValue([maxPrepTimeValue[0], newValue])
+                          }
+                        />
+                      </Col>
+                    </Row>
+                    <Row>
+                      <label class="form-label">Cook Time</label>
+                    </Row>
+                    <Row>
+                      <Col>
+                        <Slider
+                          value={maxCookTimeValue[0]}
+                          aria-labelledby="discrete-slider"
+                          step={1}
+                          min={0}
+                          max={24}
+                          valueLabelDisplay="auto"
+                          onChange={(event, newValue) =>
+                            setMaxCookTimeValue([newValue, maxCookTimeValue[1]])
+                          }
+                        />
+                      </Col>
+                      <Col>
+                        <Slider
+                          value={maxCookTimeValue[1]}
+                          aria-labelledby="discrete-slider"
+                          step={1}
+                          min={0}
+                          max={60}
+                          valueLabelDisplay="auto"
+                          onChange={(event, newValue) =>
+                            setMaxCookTimeValue([maxCookTimeValue[0], newValue])
+                          }
+                        />
+                      </Col>
+                    </Row>
+                  </Container>
                 </InputGroup>
               </Tab>
               <Tab eventKey="contact" title="Categories">
@@ -225,7 +285,9 @@ export default function FilterModal(props) {
           <Modal.Footer>
             <Button
               onClick={() => {
-                setMaxTotalTimeValue(300);
+                setMaxTotalTimeValue([24, 60]);
+                setMaxCookTimeValue([24, 60]);
+                setMaxCookTimeValue([24, 60]);
                 Object.keys(checkedFilters).forEach((filter) => {
                   var x = document.getElementById(filter.replaceAll("_", " "));
                   if (x !== null) {
@@ -233,7 +295,6 @@ export default function FilterModal(props) {
                     x.checked = false;
                   }
                 });
-                setShowAll(false);
               }}
             >
               Reset Filters

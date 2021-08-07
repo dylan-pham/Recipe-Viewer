@@ -305,7 +305,7 @@ def generate_recipe_detail_counts():
                 {re.sub('[^0-9a-zA-Z]+', '_', ing): firestore.Increment(1)})
 
         doc.reference.update(
-            {"total_time": doc.get("cook_time") + doc.get("prep_time") + doc.get("wait_time")})
+            {"total_time": int(doc.get("cook_time")) + int(doc.get("prep_time"))})
 
 
 def reset_recipe_detail_counts():
