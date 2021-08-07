@@ -13,7 +13,8 @@ export default function FilterModal(props) {
   const [filters, setFilters] = useState(null);
   const [checkedFilters, setCheckedFilters] = useState({});
   const [maxTotalTimeValue, setMaxTotalTimeValue] = useState(300);
-  const [maxActiveTimeValue, setMaxActiveTimeValue] = useState(300);
+  const [maxPrepTimeValue, setMaxPrepTimeValue] = useState(300);
+  const [maxCookTimeValue, setMaxCookTimeValue] = useState(300);
   const [showAll, setShowAll] = useState(false);
 
   useEffect(() => {
@@ -59,7 +60,8 @@ export default function FilterModal(props) {
     let cuisinesToFilter = getValuesToFilter("cuisinesSelector");
     let ingredientsToFilter = getValuesToFilter("ingredientsSelector");
     let maxTotalTime = maxTotalTimeValue;
-    let maxActiveTime = maxActiveTimeValue;
+    let maxPrepTime = maxPrepTimeValue;
+    let maxCookTime = maxCookTimeValue;
 
     if (categoriesToFilter.length !== 0) {
       filters["categories"] = categoriesToFilter;
@@ -76,8 +78,11 @@ export default function FilterModal(props) {
     if (!isNaN(maxTotalTime) && !document.getElementById("showAll").checked) {
       filters["total_time"] = maxTotalTime;
     }
-    if (!isNaN(maxActiveTime) && !document.getElementById("showAll").checked) {
-      filters["active_time"] = maxActiveTime;
+    if (!isNaN(maxPrepTime) && !document.getElementById("showAll").checked) {
+      filters["prep_time"] = maxPrepTime;
+    }
+    if (!isNaN(maxCookTime) && !document.getElementById("showAll").checked) {
+      filters["cook_time"] = maxCookTime;
     }
 
     categoriesToFilter.forEach((x) => {
@@ -154,19 +159,6 @@ export default function FilterModal(props) {
               </Tab>
               <Tab eventKey="time" title="Time">
                 <InputGroup>
-                  <label class="form-label">Active Time</label>
-                  <Slider
-                    value={maxActiveTimeValue}
-                    aria-labelledby="discrete-slider"
-                    step={5}
-                    marks
-                    min={0}
-                    max={300}
-                    valueLabelDisplay="auto"
-                    onChange={(event, newValue) =>
-                      setMaxActiveTimeValue(newValue)
-                    }
-                  />
                   <label class="form-label">Total Time</label>
                   <Slider
                     value={maxTotalTimeValue}
@@ -178,6 +170,32 @@ export default function FilterModal(props) {
                     valueLabelDisplay="auto"
                     onChange={(event, newValue) =>
                       setMaxTotalTimeValue(newValue)
+                    }
+                  />
+                  <label class="form-label">Prep Time</label>
+                  <Slider
+                    value={maxPrepTimeValue}
+                    aria-labelledby="discrete-slider"
+                    step={5}
+                    marks
+                    min={0}
+                    max={300}
+                    valueLabelDisplay="auto"
+                    onChange={(event, newValue) =>
+                      setMaxPrepTimeValue(newValue)
+                    }
+                  />
+                  <label class="form-label">Cook Time</label>
+                  <Slider
+                    value={maxCookTimeValue}
+                    aria-labelledby="discrete-slider"
+                    step={5}
+                    marks
+                    min={0}
+                    max={300}
+                    valueLabelDisplay="auto"
+                    onChange={(event, newValue) =>
+                      setMaxCookTimeValue(newValue)
                     }
                   />
                   <input
@@ -208,7 +226,6 @@ export default function FilterModal(props) {
             <Button
               onClick={() => {
                 setMaxTotalTimeValue(300);
-                setMaxActiveTimeValue(300);
                 Object.keys(checkedFilters).forEach((filter) => {
                   var x = document.getElementById(filter.replaceAll("_", " "));
                   if (x !== null) {

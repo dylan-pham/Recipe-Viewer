@@ -47,7 +47,7 @@ def index():
         elif key == "cuisine":
             recipe_ids = recipe_ids.intersection(
                 get_recipes_in_cuisines(collection_ref, req["cuisine"]))
-        elif key in ["total_time", "active_time"]:
+        elif key in ["total_time", "prep_time", "cook_time"]:
             recipe_ids = recipe_ids.intersection(
                 get_recipes_less_than_time(collection_ref, req[key], key))
         elif key == "ingredients":
@@ -236,7 +236,7 @@ def round_to_nearest_fifth(value):
 class Recipe:
     def __init__(self, name="unknown", author="unknown", cuisine="unknown",
                  ingredients=[], optional_ingredients=[], prep_time=0,
-                 wait_time=0, cook_time=0, categories=[],
+                 cook_time=0, categories=[],
                  link="", img="https://upload.wikimedia.org/wikipedia/commons/thumb/a/ac/No_image_available.svg/1024px-No_image_available.svg.png"):
         self.name = name
         self.author = author
@@ -244,10 +244,8 @@ class Recipe:
         self.ingredients = ingredients
         self.optional_ingredients = optional_ingredients
         self.prep_time = prep_time
-        self.wait_time = wait_time
         self.cook_time = cook_time
-        self.total_time = prep_time + wait_time + cook_time
-        self.active_time = prep_time + cook_time
+        self.total_time = prep_time + cook_time
         self.categories = categories
         self.link = link
         self.img = img
@@ -263,13 +261,12 @@ class Recipe:
 
         for key in source_dict:
             if key in ["name", "author", "cuisine", "ingredients",
-                       "optional_ingredients", "prep_time", "wait_time",
+                       "optional_ingredients", "prep_time",
                        "cook_time", "categories",
                        "link", "img"]:
                 setattr(recipe, key, source_dict[key])
 
-        recipe.total_time = int(recipe.prep_time) + int(recipe.wait_time) + int(recipe.cook_time)
-        recipe.active_time = int(recipe.prep_time) + int(recipe.cook_time)
+        recipe.total_time = int(recipe.prep_time) + int(recipe.cook_time)
 
         return recipe
 
@@ -308,8 +305,7 @@ def generate_recipe_detail_counts():
                 {re.sub('[^0-9a-zA-Z]+', '_', ing): firestore.Increment(1)})
 
         doc.reference.update(
-            {"total_time": doc.get("cook_time") + doc.get("prep_time") + doc.get("wait_time"),
-             "active_time": doc.get("cook_time") + doc.get("prep_time")})
+            {"total_time": doc.get("cook_time") + doc.get("prep_time") + doc.get("wait_time")})
 
 
 def reset_recipe_detail_counts():

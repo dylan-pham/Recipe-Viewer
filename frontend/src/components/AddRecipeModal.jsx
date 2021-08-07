@@ -25,7 +25,6 @@ export default function AddRecipeModal(props) {
             <br />
             <Form.Control id="prep_time" type="text" placeholder="Prep Time" />
             <Form.Control id="cook_time" type="text" placeholder="Cook Time" />
-            <Form.Control id="wait_time" type="text" placeholder="Wait Time" />
             <br />
             <Form.Control
               type="text"
@@ -74,7 +73,6 @@ function processFormData() {
     "cuisine",
     "prep_time",
     "cook_time",
-    "wait_time",
     "img",
     "link",
   ];

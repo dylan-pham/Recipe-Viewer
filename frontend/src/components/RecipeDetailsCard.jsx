@@ -4,10 +4,6 @@ import ListGroup from "react-bootstrap/ListGroup";
 
 export default function RecipeDetailsCard(props) {
   function getTotalTime() {
-    return getActiveTime() + parseInt(props.recipeData["wait_time"]);
-  }
-
-  function getActiveTime() {
     return (
       parseInt(props.recipeData["prep_time"]) +
       parseInt(props.recipeData["cook_time"])
@@ -29,16 +25,10 @@ export default function RecipeDetailsCard(props) {
             </Card.Subtitle>
           </ListGroup.Item>
           <ListGroup.Item>
-            {getTotalTime() +
-              " total time • " +
-              getActiveTime() +
-              " active time"}
+            {"Total time: " + reformatTime(getTotalTime())}
             <ul>
               <li>
                 {"Prep time: " + reformatTime(props.recipeData["prep_time"])}
-              </li>
-              <li>
-                {"Wait time: " + reformatTime(props.recipeData["wait_time"])}
               </li>
               <li>
                 {"Cook time: " + reformatTime(props.recipeData["cook_time"])}
@@ -73,7 +63,7 @@ function reformatTime(minutes) {
   if (minutes < 60) {
     return minutes + " min";
   } else if (minutes % 60 == 0) {
-    return (minutes % 60) + " hr";
+    return minutes / 60 + " hr";
   } else {
     return Math.floor(minutes / 60) + " hr " + (minutes % 60) + " min";
   }

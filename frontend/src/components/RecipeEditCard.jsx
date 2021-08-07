@@ -70,19 +70,6 @@ export default function RecipeEditCard(props) {
                 />
               </li>
               <li>
-                Wait Time
-                <FormControl
-                  id="wait"
-                  defaultValue={props.recipeData["wait_time"]}
-                  onChange={() =>
-                    props.updateRecipeData(
-                      "wait_time",
-                      document.getElementById("wait").value
-                    )
-                  }
-                />
-              </li>
-              <li>
                 Cook Time
                 <FormControl
                   id="cook"
