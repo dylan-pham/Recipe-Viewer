@@ -4,6 +4,7 @@ import firebase_admin
 from firebase_admin import credentials
 from firebase_admin import firestore
 import re
+import sys
 
 cred = credentials.Certificate("recipes-312722-5dd21da0fa79.json")
 firebase_admin.initialize_app(cred)
@@ -127,7 +128,10 @@ def get_filters():
 @ app.route("/add", methods=["POST"])
 def add_recipe():
     req = request.get_json()
-    collection_ref.add(Recipe.from_dict(req).to_dict())
+    recipe_data = Recipe.from_dict(req).to_dict()
+    collection_ref.add(recipe_data)
+
+    update_recipe_details_counter(recipe_data, None, "add")
 
     return jsonify({"res": "recipe added"})
 
@@ -158,8 +162,12 @@ def add_recipe():
 def update_recipe():
     req = request.get_json()
     doc_id = req["id"]
+    old_recipe_data = collection_ref.document(doc_id).get().to_dict()
+    new_recipe_data = Recipe.from_dict(req).get().to_dict()
     doc_ref = collection_ref.document(doc_id)
-    doc_ref.update(Recipe.from_dict(req).to_dict())
+    doc_ref.update(new_recipe_data)
+
+    update_recipe_details_counter(new_recipe_data, old_recipe_data, "update")
 
     return jsonify({"res": f"recipe updated"})
 
@@ -179,9 +187,119 @@ def update_recipe():
 def delete_recipe():
     req = request.get_json()
     doc_id = req["id"]
+    recipe_data = collection_ref.document(doc_id).get().to_dict()
     collection_ref.document(doc_id).delete()
 
+    update_recipe_details_counter(None, recipe_data, "delete")
+
     return jsonify({"res": "recipe deleted"})
+
+
+def update_recipe_details_counter(new_recipe_data, old_recipe_data, method):
+    target_collection = db.collection("recipe_details_counter")
+    if method == "add":
+        target_collection.document("author").update(
+            {re.sub('[^0-9a-zA-Z]+', '_', new_recipe_data["author"]): firestore.Increment(1)})
+
+        target_collection.document("cuisine").update(
+            {re.sub('[^0-9a-zA-Z]+', '_', new_recipe_data["cuisine"]): firestore.Increment(1)})
+
+        for cat in new_recipe_data["categories"]:
+            target_collection.document("categories").update({re.sub('[^0-9a-zA-Z]+', '_', cat): firestore.Increment(1)})
+
+        for ing in new_recipe_data["ingredients"]:
+            target_collection.document("ingredients").update(
+                {re.sub('[^0-9a-zA-Z]+', '_', ing): firestore.Increment(1)})
+    elif method == "update":
+        if new_recipe_data["author"] != old_recipe_data["author"]:
+            if target_collection.document("author").get().get(
+                    re.sub('[^0-9a-zA-Z]+', '_', old_recipe_data["author"])) == 1:
+                target_collection.document("author").update({
+                    re.sub('[^0-9a-zA-Z]+', '_', old_recipe_data["author"]): firestore.DELETE_FIELD
+                })
+            else:
+                target_collection.document("author").update(
+                    {re.sub('[^0-9a-zA-Z]+', '_', old_recipe_data["author"]): firestore.Increment(-1)})
+            target_collection.document("author").update(
+                {re.sub('[^0-9a-zA-Z]+', '_', new_recipe_data["author"]): firestore.Increment(1)})
+        # delete field if == 0
+
+        if new_recipe_data["cuisine"] != old_recipe_data["cuisine"]:
+            if target_collection.document("cuisine").get().get(
+                    re.sub('[^0-9a-zA-Z]+', '_', old_recipe_data["cuisine"])) == 1:
+                target_collection.document("cuisine").update({
+                    re.sub('[^0-9a-zA-Z]+', '_', old_recipe_data["cuisine"]): firestore.DELETE_FIELD
+                })
+            else:
+                target_collection.document("cuisine").update(
+                    {re.sub('[^0-9a-zA-Z]+', '_', old_recipe_data["cuisine"]): firestore.Increment(-1)})
+            target_collection.document("cuisine").update(
+                {re.sub('[^0-9a-zA-Z]+', '_', new_recipe_data["cuisine"]): firestore.Increment(1)})
+
+        categories_added = list(set(new_recipe_data["categories"]) - set(old_recipe_data["categories"]))
+        categories_removed = list(set(old_recipe_data["categories"]) - set(new_recipe_data["categories"]))
+
+        for cat in categories_added:
+            target_collection.document("categories").update({re.sub('[^0-9a-zA-Z]+', '_', cat): firestore.Increment(1)})
+
+        for cat in categories_removed:
+            if target_collection.document("categories").get().get(re.sub('[^0-9a-zA-Z]+', '_', cat)) == 1:
+                target_collection.document("categories").update({
+                    re.sub('[^0-9a-zA-Z]+', '_', cat): firestore.FieldValue.delete()
+                })
+            else:
+                target_collection.document("categories").update(
+                    {re.sub('[^0-9a-zA-Z]+', '_', cat): firestore.Increment(-1)})
+
+        ingredient_added = list(set(new_recipe_data["ingredients"]) - set(old_recipe_data["ingredients"]))
+        ingredients_removed = list(set(old_recipe_data["ingredients"]) - set(new_recipe_data["ingredients"]))
+
+        for ing in ingredient_added:
+            target_collection.document("ingredients").update(
+                {re.sub('[^0-9a-zA-Z]+', '_', ing): firestore.Increment(1)})
+
+        for ing in ingredients_removed:
+            if target_collection.document("ingredients").get().get(re.sub('[^0-9a-zA-Z]+', '_', ing)) == 1:
+                target_collection.document("ingredients").update({
+                    re.sub('[^0-9a-zA-Z]+', '_', ing): firestore.FieldValue.delete()})
+            else:
+                target_collection.document("ingredients").update(
+                    {re.sub('[^0-9a-zA-Z]+', '_', ing): firestore.Increment(-1)})
+    elif method == "delete":
+        if target_collection.document("author").get().get(
+                re.sub('[^0-9a-zA-Z]+', '_', old_recipe_data["author"])) == 1:
+            target_collection.document("author").update({
+                re.sub('[^0-9a-zA-Z]+', '_', old_recipe_data["author"]): firestore.DELETE_FIELD
+            })
+        else:
+            target_collection.document("author").update(
+                {re.sub('[^0-9a-zA-Z]+', '_', old_recipe_data["author"]): firestore.Increment(-1)})
+
+        if target_collection.document("cuisine").get().get(
+                re.sub('[^0-9a-zA-Z]+', '_', old_recipe_data["cuisine"])) == 1:
+            target_collection.document("cuisine").update({
+                re.sub('[^0-9a-zA-Z]+', '_', old_recipe_data["cuisine"]): firestore.DELETE_FIELD
+            })
+        else:
+            target_collection.document("cuisine").update(
+                {re.sub('[^0-9a-zA-Z]+', '_', old_recipe_data["cuisine"]): firestore.Increment(-1)})
+
+        for cat in old_recipe_data["categories"]:
+            if target_collection.document("categories").get().get(re.sub('[^0-9a-zA-Z]+', '_', cat)) == 1:
+                target_collection.document("categories").update({
+                    re.sub('[^0-9a-zA-Z]+', '_', cat): firestore.DELETE_FIELD
+                })
+            else:
+                target_collection.document("categories").update(
+                    {re.sub('[^0-9a-zA-Z]+', '_', cat): firestore.Increment(-1)})
+
+        for ing in old_recipe_data["ingredients"]:
+            if target_collection.document("ingredients").get().get(re.sub('[^0-9a-zA-Z]+', '_', ing)) == 1:
+                target_collection.document("ingredients").update({
+                    re.sub('[^0-9a-zA-Z]+', '_', ing): firestore.DELETE_FIELD})
+            else:
+                target_collection.document("ingredients").update(
+                    {re.sub('[^0-9a-zA-Z]+', '_', ing): firestore.Increment(-1)})
 
 
 def get_recipes_less_than_time(collection_ref, time, field_name):
@@ -304,15 +422,7 @@ def generate_recipe_detail_counts():
             target_collection.document("ingredients").update(
                 {re.sub('[^0-9a-zA-Z]+', '_', ing): firestore.Increment(1)})
 
-        doc.reference.update(
-            {"total_time": int(doc.get("cook_time")) + int(doc.get("prep_time"))})
-
 
 def reset_recipe_detail_counts():
     for doc in db.collection("recipe_details_counter").stream():
         doc.reference.set({})
-
-
-def regenerate():
-    reset_recipe_detail_counts()
-    generate_recipe_detail_counts()

@@ -29,11 +29,14 @@ export default function FilterModal(props) {
         setFilters(data["res"]);
         Object.keys(data["res"]).forEach((x) => {
           Object.keys(data["res"][x]).forEach((y) => {
-            checkedFilters[y] = false;
+            if (!(y in checkedFilters)) {
+              checkedFilters[y] = false;
+            }
           });
         });
+        props.doneRefreshing();
       });
-  }, []);
+  }, [props.refresh]);
 
   useEffect(() => {
     setShow(props.visible);
@@ -286,7 +289,7 @@ export default function FilterModal(props) {
             <Button
               onClick={() => {
                 setMaxTotalTimeValue([24, 60]);
-                setMaxCookTimeValue([24, 60]);
+                setMaxPrepTimeValue([24, 60]);
                 setMaxCookTimeValue([24, 60]);
                 Object.keys(checkedFilters).forEach((filter) => {
                   var x = document.getElementById(filter.replaceAll("_", " "));

@@ -11,6 +11,7 @@ export default function App() {
   const [addRecipeModalVisible, setAddRecipeModalVisible] = useState(false);
   const [showFiltersModal, setShowFiltersModal] = useState(false);
   const [filters, setFilters] = useState({});
+  const [refreshFilters, setRefreshFilters] = useState(false);
 
   function updateRecipes() {
     fetch("http://127.0.0.1:5000/", {
@@ -20,10 +21,17 @@ export default function App() {
     })
       .then((response) => response.json())
       .then((data) => {
-        console.log(data);
         setRecipeIds(data["res"]);
       });
   }
+
+  // function updateRecipeDetailCounts(id) {
+  //   fetch("http://127.0.0.1:5000/updateRecipeDetailCounts", {
+  //     method: "DELETE",
+  //     headers: { "Content-Type": "application/json" },
+  //     body: JSON.stringify({ id: id }),
+  //   });
+  // }
 
   function deleteRecipe(id) {
     fetch("http://127.0.0.1:5000/delete", {
@@ -32,6 +40,7 @@ export default function App() {
       body: JSON.stringify({ id: id }),
     }).then(() => {
       updateRecipes();
+      setRefreshFilters(true);
     });
   }
 
@@ -42,6 +51,7 @@ export default function App() {
       body: JSON.stringify(recipeData),
     }).then(() => {
       updateRecipes();
+      setRefreshFilters(true);
     });
   }
 
@@ -50,7 +60,7 @@ export default function App() {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(recipeData),
-    });
+    }).then(() => setRefreshFilters(true));
   }
 
   useEffect(() => {
@@ -88,6 +98,8 @@ export default function App() {
             setShowFiltersModal(false);
             setFilters(filters);
           }}
+          refresh={refreshFilters}
+          doneRefreshing={() => setRefreshFilters(false)}
         />
       </header>
     </div>
