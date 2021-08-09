@@ -115,7 +115,7 @@ export default function AddRecipeModal(props) {
                   max={60}
                   valueLabelDisplay="auto"
                   onChange={(event, newValue) =>
-                    setPrepTime([cookTime[0], newValue])
+                    setCookTime([cookTime[0], newValue])
                   }
                 />
               </Col>
