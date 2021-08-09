@@ -163,7 +163,7 @@ def update_recipe():
     req = request.get_json()
     doc_id = req["id"]
     old_recipe_data = collection_ref.document(doc_id).get().to_dict()
-    new_recipe_data = Recipe.from_dict(req).get().to_dict()
+    new_recipe_data = Recipe.from_dict(req).to_dict()
     doc_ref = collection_ref.document(doc_id)
     doc_ref.update(new_recipe_data)
 
