@@ -46,7 +46,7 @@ export default function FilterModal(props) {
     let values = [];
     Array.from(document.getElementById(formId).elements).forEach((element) => {
       if (element.checked) {
-        values.push(element.getAttribute("name"));
+        values.push(element.getAttribute("name").replaceAll("'", "APOSTROPHE"));
       }
     });
 
@@ -123,9 +123,18 @@ export default function FilterModal(props) {
                     return (
                       <Form.Check
                         type={"checkbox"}
-                        name={key.replaceAll("_", " ")}
+                        name={key
+                          .replaceAll("_", " ")
+                          .replaceAll("APOSTROPHE", "'")}
                         id={key.replaceAll("_", " ")}
-                        label={key.replaceAll("_", " ") + " (" + value + ")"}
+                        label={
+                          key
+                            .replaceAll("_", " ")
+                            .replaceAll("APOSTROPHE", "'") +
+                          " (" +
+                          value +
+                          ")"
+                        }
                         defaultChecked={
                           checkedFilters[key.replaceAll("_", " ")]
                         }
@@ -141,7 +150,11 @@ export default function FilterModal(props) {
                       <Form.Check
                         type={"checkbox"}
                         name={key.replaceAll("_", " ")}
+                        id={key.replaceAll("_", " ")}
                         label={key.replaceAll("_", " ") + " (" + value + ")"}
+                        defaultChecked={
+                          checkedFilters[key.replaceAll("_", " ")]
+                        }
                       />
                     );
                   })}
@@ -155,7 +168,11 @@ export default function FilterModal(props) {
                         <Form.Check
                           type={"checkbox"}
                           name={key.replaceAll("_", " ")}
+                          id={key.replaceAll("_", " ")}
                           label={key.replaceAll("_", " ") + " (" + value + ")"}
+                          defaultChecked={
+                            checkedFilters[key.replaceAll("_", " ")]
+                          }
                         />
                       );
                     }
@@ -277,7 +294,11 @@ export default function FilterModal(props) {
                       <Form.Check
                         type={"checkbox"}
                         name={key.replaceAll("_", " ")}
+                        id={key.replaceAll("_", " ")}
                         label={key.replaceAll("_", " ") + " (" + value + ")"}
+                        defaultChecked={
+                          checkedFilters[key.replaceAll("_", " ")]
+                        }
                       />
                     );
                   })}

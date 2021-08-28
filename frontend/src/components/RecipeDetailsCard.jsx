@@ -19,7 +19,7 @@ export default function RecipeDetailsCard(props) {
             <Card.Title>{props.recipeData["name"]}</Card.Title>
             <Card.Subtitle className="mb-2 text-muted">
               {"by " +
-                props.recipeData["author"] +
+                props.recipeData["author"].replaceAll("APOSTROPHE", "'") +
                 " | " +
                 props.recipeData["cuisine"]}
             </Card.Subtitle>
@@ -49,9 +49,13 @@ export default function RecipeDetailsCard(props) {
             </Card.Text>
           </ListGroup.Item>
           <ListGroup.Item>
-            <Button href={props.recipeData["link"]} variant="primary">
-              Recipe Link
-            </Button>
+            {props.recipeData["link"] != "" ? (
+              <Button href={props.recipeData["link"]} variant="primary">
+                Recipe Link
+              </Button>
+            ) : (
+              <div></div>
+            )}
           </ListGroup.Item>
         </ListGroup>
       </Card.Body>

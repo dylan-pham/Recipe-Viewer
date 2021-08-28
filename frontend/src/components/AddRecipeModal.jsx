@@ -10,8 +10,8 @@ import Container from "react-bootstrap/Container";
 
 export default function AddRecipeModal(props) {
   const [show, setShow] = useState(props.visible);
-  const [prepTime, setPrepTime] = useState([24, 60]);
-  const [cookTime, setCookTime] = useState([24, 60]);
+  const [prepTime, setPrepTime] = useState([0, 0]);
+  const [cookTime, setCookTime] = useState([0, 0]);
 
   useEffect(() => {
     setShow(props.visible);
@@ -25,7 +25,9 @@ export default function AddRecipeModal(props) {
     let recipeData = {};
 
     fields.forEach((field) => {
-      const value = document.getElementById(field).value;
+      const value = document
+        .getElementById(field)
+        .value.replaceAll("'", "APOSTROPHE");
       if (value.length !== 0) {
         recipeData[field] = value;
       }
@@ -112,7 +114,7 @@ export default function AddRecipeModal(props) {
                   aria-labelledby="discrete-slider"
                   step={1}
                   min={0}
-                  max={60}
+                  max={59}
                   valueLabelDisplay="auto"
                   onChange={(event, newValue) =>
                     setCookTime([cookTime[0], newValue])
@@ -150,6 +152,8 @@ export default function AddRecipeModal(props) {
             variant="primary"
             onClick={() => {
               props.add(processFormData());
+              setPrepTime([0, 0]);
+              setCookTime([0, 0]);
               props.onClose();
             }}
           >
