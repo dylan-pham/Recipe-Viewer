@@ -4,7 +4,6 @@ import firebase_admin
 from firebase_admin import credentials
 from firebase_admin import firestore
 import re
-import sys
 
 cred = credentials.Certificate("recipes-312722-5dd21da0fa79.json")
 firebase_admin.initialize_app(cred)
@@ -13,6 +12,44 @@ db = firestore.client()
 app = Flask(__name__)
 cors = CORS(app)
 collection_ref = db.collection("recipes")
+
+
+class Recipe:
+    def __init__(self, name="unknown", author="unknown", cuisine="unknown",
+                 ingredients=[], optional_ingredients=[], prep_time=0,
+                 cook_time=0, categories=[],
+                 link="", img="https://upload.wikimedia.org/wikipedia/commons/thumb/a/ac/No_image_available.svg/1024px-No_image_available.svg.png"):
+        self.name = name
+        self.author = author
+        self.cuisine = cuisine
+        self.ingredients = ingredients
+        self.optional_ingredients = optional_ingredients
+        self.prep_time = prep_time
+        self.cook_time = cook_time
+        self.total_time = prep_time + cook_time
+        self.categories = categories
+        self.link = link
+        self.img = img
+
+    # converts this Recipe to a dictionary
+    def to_dict(self):
+        return vars(self)
+
+    # converts given dictionary to Recipe
+    @ staticmethod
+    def from_dict(source_dict):
+        recipe = Recipe()
+
+        for key in source_dict:
+            if key in ["name", "author", "cuisine", "ingredients",
+                       "optional_ingredients", "prep_time",
+                       "cook_time", "categories",
+                       "link", "img"]:
+                setattr(recipe, key, source_dict[key])
+
+        recipe.total_time = int(recipe.prep_time) + int(recipe.cook_time)
+
+        return recipe
 
 
 # retrieves all recipe ids that match supplied filters
@@ -32,13 +69,52 @@ collection_ref = db.collection("recipes")
 #   "res": [<recipe id>...]
 # }
 @app.route("/", methods=["POST"])
-def index():
-    req = request.get_json()
-    recipe_ids = set()
+def retrieve_recipes():
+    def get_recipes_less_than_time(collection_ref, time, field_name):
+        return map(lambda doc: doc.id, collection_ref.where(field_name, "<=", int(time)).stream())
 
+    def get_recipes_in_categories(collection_ref, categories):
+        union = set()
+        for category in categories:
+            union.update(map(lambda doc: doc.id, collection_ref.where(
+                "categories", "array_contains", category).stream()))
+
+        return union
+
+    def get_recipes_containing_ingredients(collection_ref, ingredients):
+        union = set()
+        for ingredient in ingredients:
+            union.update(map(lambda doc: doc.id, collection_ref.where(
+                "ingredients", "array_contains", ingredient).stream()))
+            union.update(map(lambda doc: doc.id, collection_ref.where(
+                "optional_ingredients", "array_contains", ingredient).stream()))
+
+        return union
+
+    def get_recipes_by_authors(collection_ref, authors):
+        union = set()
+        for author in authors:
+            union.update(map(lambda doc: doc.id, collection_ref.where(
+                "author", "==", author).stream()))
+
+        return union
+
+    def get_recipes_in_cuisines(collection_ref, cuisines):
+        union = set()
+        for cuisine in cuisines:
+            union.update(map(lambda doc: doc.id, collection_ref.where(
+                "cuisine", "==", cuisine).stream()))
+
+        return union
+
+    req = request.get_json()
+
+    # initally, set of recipe ids contains all recipe ids
+    recipe_ids = set()
     for doc in collection_ref.stream():
         recipe_ids.add(doc.id)
 
+    # filtering out recipes that don't match given filters
     for key in req:
         if key == "categories":
             recipe_ids = recipe_ids.intersection(
@@ -85,22 +161,30 @@ def index():
 @ app.route("/getRecipe", methods=["POST"])
 def get_recipe():
     req = request.get_json()
+    recipe_id = req["id"]
 
-    temp = collection_ref.document(req["id"]).get().to_dict()
-    temp["id"] = req["id"]
+    recipe_details = collection_ref.document(recipe_id).get().to_dict()
+    recipe_details["id"] = recipe_id
 
-    return jsonify({"res": temp})
+    return jsonify({"res": recipe_details})
 
 
+# sample response:
+# {
+#   "author": {<author name> : <recipe count>, ...},
+#   "cuisine": {...},
+#   "categories": {...},
+#   "ingredients": {...}
+# }
 @ app.route("/getFilters", methods=["GET"])
 def get_filters():
-    res = {}
-    res["author"] = db.collection("recipe_details_counter").document("author").get().to_dict()
-    res["categories"] = db.collection("recipe_details_counter").document("categories").get().to_dict()
-    res["cuisine"] = db.collection("recipe_details_counter").document("cuisine").get().to_dict()
-    res["ingredients"] = db.collection("recipe_details_counter").document("ingredients").get().to_dict()
+    filters_n_counts = {}
+    filters_n_counts["author"] = db.collection("recipe_details_counter").document("author").get().to_dict()
+    filters_n_counts["categories"] = db.collection("recipe_details_counter").document("categories").get().to_dict()
+    filters_n_counts["cuisine"] = db.collection("recipe_details_counter").document("cuisine").get().to_dict()
+    filters_n_counts["ingredients"] = db.collection("recipe_details_counter").document("ingredients").get().to_dict()
 
-    return jsonify({"res": res})
+    return jsonify({"res": filters_n_counts})
 
 
 # adds recipes to database given recipe details
@@ -161,11 +245,10 @@ def add_recipe():
 @ app.route("/update", methods=["POST"])
 def update_recipe():
     req = request.get_json()
-    doc_id = req["id"]
-    old_recipe_data = collection_ref.document(doc_id).get().to_dict()
+    recipe_id = req["id"]
+    old_recipe_data = collection_ref.document(recipe_id).get().to_dict()
     new_recipe_data = Recipe.from_dict(req).to_dict()
-    doc_ref = collection_ref.document(doc_id)
-    doc_ref.update(new_recipe_data)
+    collection_ref.document(recipe_id).update(new_recipe_data)
 
     update_recipe_details_counter(new_recipe_data, old_recipe_data, "update")
 
@@ -222,7 +305,6 @@ def update_recipe_details_counter(new_recipe_data, old_recipe_data, method):
                     {re.sub('[^0-9a-zA-Z]+', '_', old_recipe_data["author"]): firestore.Increment(-1)})
             target_collection.document("author").update(
                 {re.sub('[^0-9a-zA-Z]+', '_', new_recipe_data["author"]): firestore.Increment(1)})
-        # delete field if == 0
 
         if new_recipe_data["cuisine"] != old_recipe_data["cuisine"]:
             if target_collection.document("cuisine").get().get(
@@ -300,129 +382,3 @@ def update_recipe_details_counter(new_recipe_data, old_recipe_data, method):
             else:
                 target_collection.document("ingredients").update(
                     {re.sub('[^0-9a-zA-Z]+', '_', ing): firestore.Increment(-1)})
-
-
-def get_recipes_less_than_time(collection_ref, time, field_name):
-    return map(lambda doc: doc.id, collection_ref.where(field_name, "<=", int(time)).stream())
-
-
-def get_recipes_in_categories(collection_ref, categories):
-    union = set()
-    for category in categories:
-        union.update(map(lambda doc: doc.id, collection_ref.where(
-            "categories", "array_contains", category).stream()))
-
-    return union
-
-
-def get_recipes_containing_ingredients(collection_ref, ingredients):
-    union = set()
-    for ingredient in ingredients:
-        union.update(map(lambda doc: doc.id, collection_ref.where(
-            "ingredients", "array_contains", ingredient).stream()))
-        union.update(map(lambda doc: doc.id, collection_ref.where(
-            "optional_ingredients", "array_contains", ingredient).stream()))
-
-    return union
-
-
-def get_recipes_by_authors(collection_ref, authors):
-    union = set()
-    for author in authors:
-        union.update(map(lambda doc: doc.id, collection_ref.where(
-            "author", "==", author).stream()))
-
-    return union
-
-
-def get_recipes_in_cuisines(collection_ref, cuisines):
-    union = set()
-    for cuisine in cuisines:
-        union.update(map(lambda doc: doc.id, collection_ref.where(
-            "cuisine", "==", cuisine).stream()))
-
-    return union
-
-
-def round_to_nearest_fifth(value):
-    if value % 5 < 3:
-        return value - value % 5
-    else:
-        return value + 5 - value % 5
-
-
-class Recipe:
-    def __init__(self, name="unknown", author="unknown", cuisine="unknown",
-                 ingredients=[], optional_ingredients=[], prep_time=0,
-                 cook_time=0, categories=[],
-                 link="", img="https://upload.wikimedia.org/wikipedia/commons/thumb/a/ac/No_image_available.svg/1024px-No_image_available.svg.png"):
-        self.name = name
-        self.author = author
-        self.cuisine = cuisine
-        self.ingredients = ingredients
-        self.optional_ingredients = optional_ingredients
-        self.prep_time = prep_time
-        self.cook_time = cook_time
-        self.total_time = prep_time + cook_time
-        self.categories = categories
-        self.link = link
-        self.img = img
-
-    # converts this Recipe to a dictionary
-    def to_dict(self):
-        return vars(self)
-
-    # converts given dictionary to Recipe
-    @ staticmethod
-    def from_dict(source_dict):
-        recipe = Recipe()
-
-        for key in source_dict:
-            if key in ["name", "author", "cuisine", "ingredients",
-                       "optional_ingredients", "prep_time",
-                       "cook_time", "categories",
-                       "link", "img"]:
-                setattr(recipe, key, source_dict[key])
-
-        recipe.total_time = int(recipe.prep_time) + int(recipe.cook_time)
-
-        return recipe
-
-
-# def update_recipe_detail_counts():
-#     return
-#     target_collection = db.collection("recipe_details_counter")
-#     target_collection.document("author").update(
-#         {re.sub('[^0-9a-zA-Z]+', '_', doc.get("author")): firestore.Increment(1)})
-
-#     target_collection.document("cuisine").update(
-#         {re.sub('[^0-9a-zA-Z]+', '_', doc.get("cuisine")): firestore.Increment(1)})
-
-#     for cat in doc.get("categories"):
-#         target_collection.document("categories").update({re.sub('[^0-9a-zA-Z]+', '_', cat): firestore.Increment(1)})
-
-#     for ing in doc.get("ingredients"):
-#         target_collection.document("ingredients").update(
-#             {re.sub('[^0-9a-zA-Z]+', '_', ing): firestore.Increment(1)})
-
-
-def generate_recipe_detail_counts():
-    target_collection = db.collection("recipe_details_counter")
-    for doc in collection_ref.stream():
-        target_collection.document("author").update(
-            {re.sub('[^0-9a-zA-Z]+', '_', doc.get("author")): firestore.Increment(1)})
-
-        target_collection.document("cuisine").update(
-            {re.sub('[^0-9a-zA-Z]+', '_', doc.get("cuisine")): firestore.Increment(1)})
-
-        for cat in doc.get("categories"):
-            target_collection.document("categories").update({re.sub('[^0-9a-zA-Z]+', '_', cat): firestore.Increment(1)})
-
-        for ing in doc.get("ingredients"):
-            target_collection.document("ingredients").update(
-                {re.sub('[^0-9a-zA-Z]+', '_', ing): firestore.Increment(1)})
-
-
-def reset_recipe_detail_counts():
-    for doc in db.collection("recipe_details_counter").stream():
-        doc.reference.set({})
