@@ -3,7 +3,6 @@ from flask_cors import CORS
 import firebase_admin
 from firebase_admin import credentials
 from firebase_admin import firestore
-import re
 
 cred = credentials.Certificate("recipes-312722-5dd21da0fa79.json")
 firebase_admin.initialize_app(cred)
@@ -162,7 +161,6 @@ def retrieve_recipes():
 def get_recipe():
     req = request.get_json()
     recipe_id = req["id"]
-
     recipe_details = collection_ref.document(recipe_id).get().to_dict()
     recipe_details["id"] = recipe_id
 
@@ -177,7 +175,7 @@ def get_recipe():
 #   "ingredients": {...}
 # }
 @ app.route("/getFilters", methods=["GET"])
-def get_filters():
+def get_recipe_detail_counts():
     filters_n_counts = {}
     filters_n_counts["author"] = db.collection("recipe_details_counter").document("author").get().to_dict()
     filters_n_counts["categories"] = db.collection("recipe_details_counter").document("categories").get().to_dict()
@@ -252,7 +250,7 @@ def update_recipe():
 
     update_recipe_details_counter(new_recipe_data, old_recipe_data, "update")
 
-    return jsonify({"res": f"recipe updated"})
+    return jsonify({"res": "recipe updated"})
 
 
 # deletes recipe from database given id
@@ -269,9 +267,9 @@ def update_recipe():
 @ app.route("/delete", methods=["DELETE"])
 def delete_recipe():
     req = request.get_json()
-    doc_id = req["id"]
-    recipe_data = collection_ref.document(doc_id).get().to_dict()
-    collection_ref.document(doc_id).delete()
+    recipe_id = req["id"]
+    recipe_data = collection_ref.document(recipe_id).get().to_dict()
+    collection_ref.document(recipe_id).delete()
 
     update_recipe_details_counter(None, recipe_data, "delete")
 
@@ -279,106 +277,103 @@ def delete_recipe():
 
 
 def update_recipe_details_counter(new_recipe_data, old_recipe_data, method):
-    target_collection = db.collection("recipe_details_counter")
+    recipe_details_collection = db.collection("recipe_details_counter")
     if method == "add":
-        target_collection.document("author").update(
-            {re.sub('[^0-9a-zA-Z]+', '_', new_recipe_data["author"]): firestore.Increment(1)})
+        recipe_details_collection.document("author").update(
+            {db.field_path(new_recipe_data["author"]): firestore.Increment(1)})
 
-        target_collection.document("cuisine").update(
-            {re.sub('[^0-9a-zA-Z]+', '_', new_recipe_data["cuisine"]): firestore.Increment(1)})
+        recipe_details_collection.document("cuisine").update(
+            {db.field_path(new_recipe_data["cuisine"]): firestore.Increment(1)})
 
         for cat in new_recipe_data["categories"]:
-            target_collection.document("categories").update({re.sub('[^0-9a-zA-Z]+', '_', cat): firestore.Increment(1)})
+            recipe_details_collection.document("categories").update(
+                {db.field_path(cat): firestore.Increment(1)})
 
         for ing in new_recipe_data["ingredients"]:
-            target_collection.document("ingredients").update(
-                {re.sub('[^0-9a-zA-Z]+', '_', ing): firestore.Increment(1)})
+            recipe_details_collection.document("ingredients").update(
+                {db.field_path(ing): firestore.Increment(1)})
     elif method == "update":
         if new_recipe_data["author"] != old_recipe_data["author"]:
-            if target_collection.document("author").get().get(
-                    re.sub('[^0-9a-zA-Z]+', '_', old_recipe_data["author"])) == 1:
-                target_collection.document("author").update({
-                    re.sub('[^0-9a-zA-Z]+', '_', old_recipe_data["author"]): firestore.DELETE_FIELD
-                })
+            if recipe_details_collection.document("author").get().get(
+                    db.field_path(old_recipe_data["author"])) == 1:
+                recipe_details_collection.document("author").update({
+                    db.field_path(old_recipe_data["author"]): firestore.DELETE_FIELD})
             else:
-                target_collection.document("author").update(
-                    {re.sub('[^0-9a-zA-Z]+', '_', old_recipe_data["author"]): firestore.Increment(-1)})
-            target_collection.document("author").update(
-                {re.sub('[^0-9a-zA-Z]+', '_', new_recipe_data["author"]): firestore.Increment(1)})
-
+                recipe_details_collection.document("author").update(
+                    {db.field_path(old_recipe_data["author"]): firestore.Increment(-1)})
+            recipe_details_collection.document("author").update(
+                {db.field_path(new_recipe_data["author"]): firestore.Increment(1)})
         if new_recipe_data["cuisine"] != old_recipe_data["cuisine"]:
-            if target_collection.document("cuisine").get().get(
-                    re.sub('[^0-9a-zA-Z]+', '_', old_recipe_data["cuisine"])) == 1:
-                target_collection.document("cuisine").update({
-                    re.sub('[^0-9a-zA-Z]+', '_', old_recipe_data["cuisine"]): firestore.DELETE_FIELD
-                })
+            if recipe_details_collection.document("cuisine").get().get(
+                    db.field_path(old_recipe_data["cuisine"])) == 1:
+                recipe_details_collection.document("cuisine").update({
+                    db.field_path(old_recipe_data["cuisine"]): firestore.DELETE_FIELD})
             else:
-                target_collection.document("cuisine").update(
-                    {re.sub('[^0-9a-zA-Z]+', '_', old_recipe_data["cuisine"]): firestore.Increment(-1)})
-            target_collection.document("cuisine").update(
-                {re.sub('[^0-9a-zA-Z]+', '_', new_recipe_data["cuisine"]): firestore.Increment(1)})
-
+                recipe_details_collection.document("cuisine").update(
+                    {db.field_path(old_recipe_data["cuisine"]): firestore.Increment(-1)})
+            recipe_details_collection.document("cuisine").update(
+                {db.field_path(new_recipe_data["cuisine"]): firestore.Increment(1)})
         categories_added = list(set(new_recipe_data["categories"]) - set(old_recipe_data["categories"]))
         categories_removed = list(set(old_recipe_data["categories"]) - set(new_recipe_data["categories"]))
 
         for cat in categories_added:
-            target_collection.document("categories").update({re.sub('[^0-9a-zA-Z]+', '_', cat): firestore.Increment(1)})
+            recipe_details_collection.document("categories").update(
+                {db.field_path(cat): firestore.Increment(1)})
 
         for cat in categories_removed:
-            if target_collection.document("categories").get().get(re.sub('[^0-9a-zA-Z]+', '_', cat)) == 1:
-                target_collection.document("categories").update({
-                    re.sub('[^0-9a-zA-Z]+', '_', cat): firestore.FieldValue.delete()
-                })
+            if recipe_details_collection.document("categories").get().get(db.field_path(cat)) == 1:
+                recipe_details_collection.document("categories").update({
+                    db.field_path(cat): firestore.FieldValue.delete()})
             else:
-                target_collection.document("categories").update(
-                    {re.sub('[^0-9a-zA-Z]+', '_', cat): firestore.Increment(-1)})
+                recipe_details_collection.document("categories").update(
+                    {db.field_path(cat): firestore.Increment(-1)})
 
         ingredient_added = list(set(new_recipe_data["ingredients"]) - set(old_recipe_data["ingredients"]))
         ingredients_removed = list(set(old_recipe_data["ingredients"]) - set(new_recipe_data["ingredients"]))
 
         for ing in ingredient_added:
-            target_collection.document("ingredients").update(
-                {re.sub('[^0-9a-zA-Z]+', '_', ing): firestore.Increment(1)})
+            recipe_details_collection.document("ingredients").update(
+                {db.field_path(ing): firestore.Increment(1)})
 
         for ing in ingredients_removed:
-            if target_collection.document("ingredients").get().get(re.sub('[^0-9a-zA-Z]+', '_', ing)) == 1:
-                target_collection.document("ingredients").update({
-                    re.sub('[^0-9a-zA-Z]+', '_', ing): firestore.FieldValue.delete()})
+            if recipe_details_collection.document("ingredients").get().get(db.field_path(ing)) == 1:
+                recipe_details_collection.document("ingredients").update({
+                    db.field_path(ing): firestore.FieldValue.delete()})
             else:
-                target_collection.document("ingredients").update(
-                    {re.sub('[^0-9a-zA-Z]+', '_', ing): firestore.Increment(-1)})
+                recipe_details_collection.document("ingredients").update(
+                    {db.field_path(ing): firestore.Increment(-1)})
     elif method == "delete":
-        if target_collection.document("author").get().get(
-                re.sub('[^0-9a-zA-Z]+', '_', old_recipe_data["author"])) == 1:
-            target_collection.document("author").update({
-                re.sub('[^0-9a-zA-Z]+', '_', old_recipe_data["author"]): firestore.DELETE_FIELD
+        if recipe_details_collection.document("author").get().get(
+                db.field_path(old_recipe_data["author"])) == 1:
+            recipe_details_collection.document("author").update({
+                db.field_path(old_recipe_data["author"]): firestore.DELETE_FIELD
             })
         else:
-            target_collection.document("author").update(
-                {re.sub('[^0-9a-zA-Z]+', '_', old_recipe_data["author"]): firestore.Increment(-1)})
+            recipe_details_collection.document("author").update(
+                {db.field_path(old_recipe_data["author"]): firestore.Increment(-1)})
 
-        if target_collection.document("cuisine").get().get(
-                re.sub('[^0-9a-zA-Z]+', '_', old_recipe_data["cuisine"])) == 1:
-            target_collection.document("cuisine").update({
-                re.sub('[^0-9a-zA-Z]+', '_', old_recipe_data["cuisine"]): firestore.DELETE_FIELD
+        if recipe_details_collection.document("cuisine").get().get(
+                db.field_path(old_recipe_data["cuisine"])) == 1:
+            recipe_details_collection.document("cuisine").update({
+                db.field_path(old_recipe_data["cuisine"]): firestore.DELETE_FIELD
             })
         else:
-            target_collection.document("cuisine").update(
-                {re.sub('[^0-9a-zA-Z]+', '_', old_recipe_data["cuisine"]): firestore.Increment(-1)})
+            recipe_details_collection.document("cuisine").update(
+                {db.field_path(old_recipe_data["cuisine"]): firestore.Increment(-1)})
 
         for cat in old_recipe_data["categories"]:
-            if target_collection.document("categories").get().get(re.sub('[^0-9a-zA-Z]+', '_', cat)) == 1:
-                target_collection.document("categories").update({
-                    re.sub('[^0-9a-zA-Z]+', '_', cat): firestore.DELETE_FIELD
+            if recipe_details_collection.document("categories").get().get(db.field_path(cat)) == 1:
+                recipe_details_collection.document("categories").update({
+                    db.field_path(cat): firestore.DELETE_FIELD
                 })
             else:
-                target_collection.document("categories").update(
-                    {re.sub('[^0-9a-zA-Z]+', '_', cat): firestore.Increment(-1)})
+                recipe_details_collection.document("categories").update(
+                    {db.field_path(cat): firestore.Increment(-1)})
 
         for ing in old_recipe_data["ingredients"]:
-            if target_collection.document("ingredients").get().get(re.sub('[^0-9a-zA-Z]+', '_', ing)) == 1:
-                target_collection.document("ingredients").update({
-                    re.sub('[^0-9a-zA-Z]+', '_', ing): firestore.DELETE_FIELD})
+            if recipe_details_collection.document("ingredients").get().get(db.field_path(ing)) == 1:
+                recipe_details_collection.document("ingredients").update({
+                    db.field_path(ing): firestore.DELETE_FIELD})
             else:
-                target_collection.document("ingredients").update(
-                    {re.sub('[^0-9a-zA-Z]+', '_', ing): firestore.Increment(-1)})
+                recipe_details_collection.document("ingredients").update(
+                    {db.field_path(ing): firestore.Increment(-1)})
