@@ -9,7 +9,7 @@ import FiltersModal from "./components/FiltersModal";
 export default function App() {
   const [recipeIds, setRecipeIds] = useState([]);
   const [addRecipeModalVisible, setAddRecipeModalVisible] = useState(false);
-  const [showFiltersModal, setShowFiltersModal] = useState(false);
+  const [filtersModalVisible, setfiltersModalVisible] = useState(false);
   const [filters, setFilters] = useState({});
   const [refreshFilters, setRefreshFilters] = useState(false);
 
@@ -24,14 +24,6 @@ export default function App() {
         setRecipeIds(data["res"]);
       });
   }
-
-  // function updateRecipeDetailCounts(id) {
-  //   fetch("http://127.0.0.1:5000/updateRecipeDetailCounts", {
-  //     method: "DELETE",
-  //     headers: { "Content-Type": "application/json" },
-  //     body: JSON.stringify({ id: id }),
-  //   });
-  // }
 
   function deleteRecipe(id) {
     fetch("http://127.0.0.1:5000/delete", {
@@ -60,7 +52,10 @@ export default function App() {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(recipeData),
-    }).then(() => setRefreshFilters(true));
+    }).then(() => {
+      updateRecipes();
+      setRefreshFilters(true);
+    });
   }
 
   useEffect(() => {
@@ -75,7 +70,7 @@ export default function App() {
             setAddRecipeModalVisible(true);
           }}
           onFiltersButtonClicked={() => {
-            setShowFiltersModal(true);
+            setfiltersModalVisible(true);
           }}
         />
         <Row className="justify-content-center">
@@ -90,12 +85,12 @@ export default function App() {
         <AddRecipeModal
           visible={addRecipeModalVisible}
           onClose={() => setAddRecipeModalVisible(false)}
-          add={(recipeData) => addRecipe(recipeData)}
+          addRecipe={(recipeData) => addRecipe(recipeData)}
         />
         <FiltersModal
-          visible={showFiltersModal}
+          visible={filtersModalVisible}
           onClose={(filters) => {
-            setShowFiltersModal(false);
+            setfiltersModalVisible(false);
             setFilters(filters);
           }}
           refresh={refreshFilters}

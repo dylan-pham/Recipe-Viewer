@@ -19,7 +19,7 @@ export default function RecipeDetailsCard(props) {
             <Card.Title>{props.recipeData["name"]}</Card.Title>
             <Card.Subtitle className="mb-2 text-muted">
               {"by " +
-                props.recipeData["author"].replaceAll("APOSTROPHE", "'") +
+                props.recipeData["author"] +
                 " | " +
                 props.recipeData["cuisine"]}
             </Card.Subtitle>

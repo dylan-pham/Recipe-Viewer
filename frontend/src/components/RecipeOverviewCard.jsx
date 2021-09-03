@@ -5,7 +5,7 @@ import RecipeModal from "./RecipeModal";
 
 export default function RecipeOverviewCard(props) {
   const [recipeData, setRecipeData] = useState(null);
-  const [showRecipeModal, setShowRecipeModal] = useState(false);
+  const [recipeModalVisible, setRecipeModalVisible] = useState(false);
 
   useEffect(() => {
     setRecipeData(initRecipeDetails(props.id));
@@ -30,7 +30,7 @@ export default function RecipeOverviewCard(props) {
       <>
         <Card
           style={{ width: "25rem", height: "25" }}
-          onClick={() => setShowRecipeModal(true)}
+          onClick={() => setRecipeModalVisible(true)}
         >
           <Card.Header>
             <Card.Body>
@@ -43,8 +43,8 @@ export default function RecipeOverviewCard(props) {
           </Card.Header>
         </Card>
         <RecipeModal
-          visible={showRecipeModal}
-          onClose={() => setShowRecipeModal(false)}
+          visible={recipeModalVisible}
+          onClose={() => setRecipeModalVisible(false)}
           recipeData={recipeData}
           delete={(id) => props.delete(id)}
           update={(recipeData) => props.update(recipeData)}

@@ -12,12 +12,33 @@ import Col from "react-bootstrap/Col";
 import Container from "react-bootstrap/Container";
 
 export default function FilterModal(props) {
-  const [show, setShow] = useState(props.visible);
   const [filters, setFilters] = useState(null);
-  const [checkedFilters] = useState({});
+  const [selectedFilters] = useState({});
   const [maxTotalTimeValue, setMaxTotalTimeValue] = useState([24, 60]);
   const [maxPrepTimeValue, setMaxPrepTimeValue] = useState([24, 60]);
   const [maxCookTimeValue, setMaxCookTimeValue] = useState([24, 60]);
+
+  function FilterTabs(props) {
+    return (
+      <div>
+        <Tab eventKey={props.eventKey} title={props.title}>
+          <Form id={props.formId}>
+            {Object.entries(filters[props.eventKey]).map(([key, value]) => {
+              return (
+                <Form.Check
+                  type={"checkbox"}
+                  name={key}
+                  id={key}
+                  label={key + " (" + value + ")"}
+                  defaultChecked={selectedFilters[key]}
+                />
+              );
+            })}
+          </Form>
+        </Tab>
+      </div>
+    );
+  }
 
   useEffect(() => {
     fetch("http://127.0.0.1:5000/getFilters", {
@@ -29,8 +50,8 @@ export default function FilterModal(props) {
         setFilters(data["res"]);
         Object.keys(data["res"]).forEach((x) => {
           Object.keys(data["res"][x]).forEach((y) => {
-            if (!(y in checkedFilters)) {
-              checkedFilters[y] = false;
+            if (!(y in selectedFilters)) {
+              selectedFilters[y] = false;
             }
           });
         });
@@ -38,128 +59,141 @@ export default function FilterModal(props) {
       });
   }, [props.refresh]);
 
-  useEffect(() => {
-    setShow(props.visible);
-  }, [props.visible]);
-
-  function getValuesToFilter(formId) {
+  function getSelectedFiltersOfType(formId) {
     let values = [];
     Array.from(document.getElementById(formId).elements).forEach((element) => {
       if (element.checked) {
-        values.push(element.getAttribute("name").replaceAll("'", "APOSTROPHE"));
+        values.push(element.getAttribute("name"));
       }
     });
 
     return values;
   }
 
-  function getFilters() {
-    Object.keys(checkedFilters).forEach((key) => {
-      checkedFilters[key] = false;
-    });
+  function processSelectedFiltersOfType(type, formId, selectedFiltersAcc) {
+    let filtersSelected = getSelectedFiltersOfType(formId);
+    if (filtersSelected.length !== 0) {
+      selectedFiltersAcc[type] = filtersSelected;
 
-    let filters = {};
-
-    let categoriesToFilter = getValuesToFilter("categoriesSelector");
-    let authorsToFilter = getValuesToFilter("authorsSelector");
-    let cuisinesToFilter = getValuesToFilter("cuisinesSelector");
-    let ingredientsToFilter = getValuesToFilter("ingredientsSelector");
-    let maxTotalTime = maxTotalTimeValue[0] * 60 + maxTotalTimeValue[1];
-    let maxPrepTime = maxPrepTimeValue[0] * 60 + maxPrepTimeValue[1];
-    let maxCookTime = maxCookTimeValue[0] * 60 + maxCookTimeValue[1];
-
-    if (categoriesToFilter.length !== 0) {
-      filters["categories"] = categoriesToFilter;
+      filtersSelected.forEach((x) => {
+        selectedFilters[x] = true;
+      });
     }
-    if (authorsToFilter.length !== 0) {
-      filters["author"] = authorsToFilter;
-    }
-    if (cuisinesToFilter.length !== 0) {
-      filters["cuisine"] = cuisinesToFilter;
-    }
-    if (ingredientsToFilter.length !== 0) {
-      filters["ingredients"] = ingredientsToFilter;
-    }
-    if (!isNaN(maxTotalTime)) {
-      filters["total_time"] = maxTotalTime;
-    }
-    if (!isNaN(maxPrepTime)) {
-      filters["prep_time"] = maxPrepTime;
-    }
-    if (!isNaN(maxCookTime)) {
-      filters["cook_time"] = maxCookTime;
-    }
-
-    categoriesToFilter.forEach((x) => {
-      checkedFilters[x] = true;
-    });
-    authorsToFilter.forEach((x) => {
-      checkedFilters[x] = true;
-    });
-    ingredientsToFilter.forEach((x) => {
-      checkedFilters[x] = true;
-    });
-    cuisinesToFilter.forEach((x) => {
-      checkedFilters[x] = true;
-    });
-
-    return filters;
   }
+
+  function getSelectedFilters() {
+    let tempSelectedFilters = {};
+
+    processSelectedFiltersOfType(
+      "categories",
+      "categoriesSelector",
+      tempSelectedFilters
+    );
+    processSelectedFiltersOfType(
+      "author",
+      "authorsSelector",
+      tempSelectedFilters
+    );
+    processSelectedFiltersOfType(
+      "cuisine",
+      "cuisinesSelector",
+      tempSelectedFilters
+    );
+    processSelectedFiltersOfType(
+      "ingredients",
+      "ingredientsSelector",
+      tempSelectedFilters
+    );
+
+    let maxTotalTime = maxTotalTimeValue[0] * 60 + maxTotalTimeValue[1];
+    if (!isNaN(maxTotalTime)) {
+      tempSelectedFilters["total_time"] = maxTotalTime;
+    }
+
+    let maxPrepTime = maxPrepTimeValue[0] * 60 + maxPrepTimeValue[1];
+    if (!isNaN(maxPrepTime)) {
+      tempSelectedFilters["prep_time"] = maxPrepTime;
+    }
+
+    let maxCookTime = maxCookTimeValue[0] * 60 + maxCookTimeValue[1];
+    if (!isNaN(maxCookTime)) {
+      tempSelectedFilters["cook_time"] = maxCookTime;
+    }
+
+    return tempSelectedFilters;
+  }
+
+  const resetFilters = () => {
+    setMaxTotalTimeValue([24, 60]);
+    setMaxPrepTimeValue([24, 60]);
+    setMaxCookTimeValue([24, 60]);
+
+    Object.keys(selectedFilters).forEach((filter) => {
+      selectedFilters[filter] = false;
+      var filterCheckbox = document.getElementById(filter);
+      filterCheckbox.checked = false;
+    });
+  };
 
   if (filters === null) {
     return <div></div>;
   } else {
     return (
       <>
-        <Modal show={show} onHide={() => props.onClose(getFilters())} size="lg">
+        <Modal
+          show={props.visible}
+          onHide={() => props.onClose(getSelectedFilters())}
+          size="lg"
+        >
           <Modal.Header closeButton>
             <Modal.Title>Filters</Modal.Title>
           </Modal.Header>
           <Modal.Body>
             <Tabs defaultActiveKey="author" id="uncontrolled-tab-example">
-              <Tab eventKey="author" title="Author">
+              <FilterTabs
+                eventKey="author"
+                title="Author"
+                formId="authorsSelector"
+                filters={filters}
+                selectedFilters={selectedFilters}
+              />
+              <FilterTabs
+                eventKey="cuisine"
+                title="Cuisine"
+                formId="cuisinesSelector"
+                filters={filters}
+                selectedFilters={selectedFilters}
+              />
+              {/* <Tab eventKey="author" title="Author">
                 <Form id="authorsSelector">
                   {Object.entries(filters["author"]).map(([key, value]) => {
                     return (
                       <Form.Check
                         type={"checkbox"}
-                        name={key
-                          .replaceAll("_", " ")
-                          .replaceAll("APOSTROPHE", "'")}
-                        id={key.replaceAll("_", " ")}
-                        label={
-                          key
-                            .replaceAll("_", " ")
-                            .replaceAll("APOSTROPHE", "'") +
-                          " (" +
-                          value +
-                          ")"
-                        }
-                        defaultChecked={
-                          checkedFilters[key.replaceAll("_", " ")]
-                        }
+                        name={key}
+                        id={key}
+                        label={key + " (" + value + ")"}
+                        defaultChecked={checkedFilters[key]}
                       />
                     );
                   })}
                 </Form>
-              </Tab>
-              <Tab eventKey="cuisine" title="Cuisine">
+              </Tab> */}
+              {/* <Tab eventKey="cuisine" title="Cuisine">
                 <Form id="cuisinesSelector">
                   {Object.entries(filters["cuisine"]).map(([key, value]) => {
                     return (
                       <Form.Check
                         type={"checkbox"}
-                        name={key.replaceAll("_", " ")}
-                        id={key.replaceAll("_", " ")}
-                        label={key.replaceAll("_", " ") + " (" + value + ")"}
-                        defaultChecked={
-                          checkedFilters[key.replaceAll("_", " ")]
-                        }
+                        name={key}
+                        id={key}
+                        label={key + " (" + value + ")"}
+                        defaultChecked={checkedFilters[key]}
                       />
                     );
                   })}
                 </Form>
-              </Tab>
+              </Tab> */}
               <Tab eventKey="ingredients" title="Ingredients">
                 <Form id="ingredientsSelector">
                   {Object.entries(filters["ingredients"]).map(
@@ -167,12 +201,10 @@ export default function FilterModal(props) {
                       return (
                         <Form.Check
                           type={"checkbox"}
-                          name={key.replaceAll("_", " ")}
-                          id={key.replaceAll("_", " ")}
-                          label={key.replaceAll("_", " ") + " (" + value + ")"}
-                          defaultChecked={
-                            checkedFilters[key.replaceAll("_", " ")]
-                          }
+                          name={key}
+                          id={key}
+                          label={key + " (" + value + ")"}
+                          defaultChecked={selectedFilters[key]}
                         />
                       );
                     }
@@ -188,7 +220,6 @@ export default function FilterModal(props) {
                     <Row>
                       <Col>
                         <Slider
-                          id="test"
                           value={maxTotalTimeValue[0]}
                           aria-labelledby="discrete-slider"
                           step={1}
@@ -293,12 +324,10 @@ export default function FilterModal(props) {
                     return (
                       <Form.Check
                         type={"checkbox"}
-                        name={key.replaceAll("_", " ")}
-                        id={key.replaceAll("_", " ")}
-                        label={key.replaceAll("_", " ") + " (" + value + ")"}
-                        defaultChecked={
-                          checkedFilters[key.replaceAll("_", " ")]
-                        }
+                        name={key}
+                        id={key}
+                        label={key + " (" + value + ")"}
+                        defaultChecked={selectedFilters[key]}
                       />
                     );
                   })}
@@ -307,22 +336,7 @@ export default function FilterModal(props) {
             </Tabs>
           </Modal.Body>
           <Modal.Footer>
-            <Button
-              onClick={() => {
-                setMaxTotalTimeValue([24, 60]);
-                setMaxPrepTimeValue([24, 60]);
-                setMaxCookTimeValue([24, 60]);
-                Object.keys(checkedFilters).forEach((filter) => {
-                  var x = document.getElementById(filter.replaceAll("_", " "));
-                  if (x !== null) {
-                    // no idea when x could be null
-                    x.checked = false;
-                  }
-                });
-              }}
-            >
-              Reset Filters
-            </Button>
+            <Button onClick={resetFilters}>Reset Filters</Button>
           </Modal.Footer>
         </Modal>
       </>

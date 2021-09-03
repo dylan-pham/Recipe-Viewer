@@ -128,12 +128,15 @@ def retrieve_recipes():
 # }
 @ app.route("/getRecipe", methods=["POST"])
 def get_recipe():
-    req = request.get_json()
-    recipe_id = req["id"]
-    recipe_details = collection_ref.document(recipe_id).get().to_dict()
-    recipe_details["id"] = recipe_id
+    try:
+        req = request.get_json()
+        recipe_id = req["id"]
+        recipe_details = collection_ref.document(recipe_id).get().to_dict()
+        recipe_details["id"] = recipe_id
 
-    return jsonify({"res": recipe_details})
+        return jsonify({"res": recipe_details})
+    except:
+        return jsonify({"res": "invalid id/no id provided"})
 
 
 # sample response:
@@ -236,14 +239,17 @@ def update_recipe():
 # }
 @ app.route("/delete", methods=["DELETE"])
 def delete_recipe():
-    req = request.get_json()
-    recipe_id = req["id"]
-    recipe_data = collection_ref.document(recipe_id).get().to_dict()
-    collection_ref.document(recipe_id).delete()
+    try:
+        req = request.get_json()
+        recipe_id = req["id"]
+        recipe_data = collection_ref.document(recipe_id).get().to_dict()
+        collection_ref.document(recipe_id).delete()
 
-    update_recipe_details_counter(None, recipe_data, "delete")
+        update_recipe_details_counter(None, recipe_data, "delete")
 
-    return jsonify({"res": "recipe deleted"})
+        return jsonify({"res": "recipe deleted"})
+    except:
+        return jsonify({"res": "invalid id/no id provided"})
 
 
 def update_recipe_details_counter(new_recipe_data, old_recipe_data, method):

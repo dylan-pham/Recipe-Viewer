@@ -9,31 +9,20 @@ import Col from "react-bootstrap/Col";
 import Container from "react-bootstrap/Container";
 
 export default function AddRecipeModal(props) {
-  const [show, setShow] = useState(props.visible);
-  const [prepTime, setPrepTime] = useState([0, 0]);
+  const [prepTime, setPrepTime] = useState([0, 0]); // [hours, minutes]
   const [cookTime, setCookTime] = useState([0, 0]);
 
-  useEffect(() => {
-    setShow(props.visible);
-  }, [props.visible]);
-
   function processFormData() {
-    const fields = ["name", "author", "cuisine", "img", "link"];
-
-    const listFields = ["categories", "ingredients", "optional_ingredients"];
-
     let recipeData = {};
 
-    fields.forEach((field) => {
-      const value = document
-        .getElementById(field)
-        .value.replaceAll("'", "APOSTROPHE");
+    ["name", "author", "cuisine", "img", "link"].forEach((field) => {
+      const value = document.getElementById(field).value;
       if (value.length !== 0) {
         recipeData[field] = value;
       }
     });
 
-    listFields.forEach((field) => {
+    ["categories", "ingredients", "optional_ingredients"].forEach((field) => {
       const value = document.getElementById(field).value;
       if (value.length !== 0) {
         recipeData[field] = value.split(", ");
@@ -48,7 +37,7 @@ export default function AddRecipeModal(props) {
 
   return (
     <>
-      <Modal show={show} onHide={() => props.onClose()}>
+      <Modal show={props.visible} onHide={() => props.onClose()}>
         <Modal.Header closeButton>
           <Modal.Title>Add Recipe</Modal.Title>
         </Modal.Header>
@@ -151,7 +140,7 @@ export default function AddRecipeModal(props) {
           <Button
             variant="primary"
             onClick={() => {
-              props.add(processFormData());
+              props.addRecipe(processFormData());
               setPrepTime([0, 0]);
               setCookTime([0, 0]);
               props.onClose();

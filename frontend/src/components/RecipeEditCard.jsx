@@ -1,21 +1,30 @@
 import Card from "react-bootstrap/Card";
 import ListGroup from "react-bootstrap/ListGroup";
 import FormControl from "react-bootstrap/FormControl";
-import React, { useState, useEffect } from "react";
+import React from "react";
 
 export default function RecipeEditCard(props) {
+  const onFieldChangeHandler = (field_name) => {
+    props.updateRecipeData(
+      field_name,
+      document.getElementById(field_name).value
+    );
+  };
+
+  const onListFieldChangeHandler = (field_name) => {
+    props.updateRecipeData(
+      field_name,
+      convertToList(document.getElementById(field_name).value)
+    );
+  };
+
   return (
     <Card style={{ width: "100%" }}>
       Image Link
       <FormControl
         defaultValue={props.recipeData["img"]}
-        id="imgLink"
-        onChange={() =>
-          props.updateRecipeData(
-            "img",
-            document.getElementById("imgLink").value
-          )
-        }
+        id="img"
+        onChange={() => onFieldChangeHandler("img")}
       />
       <Card.Body>
         <ListGroup variant="flush">
@@ -24,34 +33,19 @@ export default function RecipeEditCard(props) {
             <FormControl
               id="name"
               defaultValue={props.recipeData["name"]}
-              onChange={() =>
-                props.updateRecipeData(
-                  "name",
-                  document.getElementById("name").value
-                )
-              }
+              onChange={() => onFieldChangeHandler("name")}
             />
             Author
             <FormControl
               id="author"
               defaultValue={props.recipeData["author"]}
-              onChange={() =>
-                props.updateRecipeData(
-                  "author",
-                  document.getElementById("author").value
-                )
-              }
+              onChange={() => onFieldChangeHandler("author")}
             />
             Cuisine
             <FormControl
               defaultValue={props.recipeData["cuisine"]}
               id="cuisine"
-              onChange={() =>
-                props.updateRecipeData(
-                  "cuisine",
-                  document.getElementById("cuisine").value
-                )
-              }
+              onChange={() => onFieldChangeHandler("cuisine")}
             />
           </ListGroup.Item>
           <ListGroup.Item>
@@ -59,27 +53,17 @@ export default function RecipeEditCard(props) {
               <li>
                 Prep Time
                 <FormControl
-                  id="prep"
+                  id="prep_time"
                   defaultValue={props.recipeData["prep_time"]}
-                  onChange={() =>
-                    props.updateRecipeData(
-                      "prep_time",
-                      document.getElementById("prep").value
-                    )
-                  }
+                  onChange={() => onFieldChangeHandler("prep_time")}
                 />
               </li>
               <li>
                 Cook Time
                 <FormControl
-                  id="cook"
+                  id="cook_time"
                   defaultValue={props.recipeData["cook_time"]}
-                  onChange={() =>
-                    props.updateRecipeData(
-                      "cook_time",
-                      document.getElementById("cook").value
-                    )
-                  }
+                  onChange={() => onFieldChangeHandler("cook_time")}
                 />
               </li>
             </ul>
@@ -91,27 +75,17 @@ export default function RecipeEditCard(props) {
                 id="ingredients"
                 as="textarea"
                 defaultValue={formatList(props.recipeData["ingredients"])}
-                onChange={() =>
-                  props.updateRecipeData(
-                    "ingredients",
-                    convertToList(document.getElementById("ingredients").value)
-                  )
-                }
+                onChange={() => onListFieldChangeHandler("ingredients")}
               />
               Optional Ingredients
               <FormControl
-                id="optIngredients"
+                id="optional_ingredients"
                 as="textarea"
                 defaultValue={formatList(
                   props.recipeData["optional_ingredients"]
                 )}
                 onChange={() =>
-                  props.updateRecipeData(
-                    "optional_ingredients",
-                    convertToList(
-                      document.getElementById("optIngredients").value
-                    )
-                  )
+                  onListFieldChangeHandler("optional_ingredients")
                 }
               />
             </Card.Text>
@@ -119,27 +93,17 @@ export default function RecipeEditCard(props) {
           <ListGroup.Item>
             Recipe Link
             <FormControl
-              id="recipeLink"
+              id="link"
               as="textarea"
               defaultValue={props.recipeData["link"]}
-              onChange={() =>
-                props.updateRecipeData(
-                  "link",
-                  document.getElementById("recipeLink").value
-                )
-              }
+              onChange={() => onFieldChangeHandler("link")}
             />
             Categories
             <FormControl
-              id="cats"
+              id="categories"
               as="textarea"
               defaultValue={formatList(props.recipeData["categories"])}
-              onChange={() =>
-                props.updateRecipeData(
-                  "categories",
-                  convertToList(document.getElementById("cats").value)
-                )
-              }
+              onChange={() => onListFieldChangeHandler("categories")}
             />
           </ListGroup.Item>
         </ListGroup>
