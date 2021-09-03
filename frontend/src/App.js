@@ -14,6 +14,7 @@ export default function App() {
   const [refreshFilters, setRefreshFilters] = useState(false);
 
   function updateRecipes() {
+    console.log(filters);
     fetch("http://127.0.0.1:5000/", {
       method: "POST",
       headers: { "Content-Type": "application/json" },

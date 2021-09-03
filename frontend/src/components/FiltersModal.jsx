@@ -18,25 +18,21 @@ export default function FilterModal(props) {
   const [maxPrepTimeValue, setMaxPrepTimeValue] = useState([24, 60]);
   const [maxCookTimeValue, setMaxCookTimeValue] = useState([24, 60]);
 
-  function FilterTabs(props) {
+  function FilterSelector(props) {
     return (
-      <div>
-        <Tab eventKey={props.eventKey} title={props.title}>
-          <Form id={props.formId}>
-            {Object.entries(filters[props.eventKey]).map(([key, value]) => {
-              return (
-                <Form.Check
-                  type={"checkbox"}
-                  name={key}
-                  id={key}
-                  label={key + " (" + value + ")"}
-                  defaultChecked={selectedFilters[key]}
-                />
-              );
-            })}
-          </Form>
-        </Tab>
-      </div>
+      <Form id={props.formId}>
+        {Object.entries(filters[props.filterType]).map(([key, value]) => {
+          return (
+            <Form.Check
+              type={"checkbox"}
+              name={key}
+              id={key}
+              label={key + " (" + value + ")"}
+              defaultChecked={selectedFilters[key]}
+            />
+          );
+        })}
+      </Form>
     );
   }
 
@@ -150,66 +146,20 @@ export default function FilterModal(props) {
           </Modal.Header>
           <Modal.Body>
             <Tabs defaultActiveKey="author" id="uncontrolled-tab-example">
-              <FilterTabs
-                eventKey="author"
-                title="Author"
-                formId="authorsSelector"
-                filters={filters}
-                selectedFilters={selectedFilters}
-              />
-              <FilterTabs
-                eventKey="cuisine"
-                title="Cuisine"
-                formId="cuisinesSelector"
-                filters={filters}
-                selectedFilters={selectedFilters}
-              />
-              {/* <Tab eventKey="author" title="Author">
-                <Form id="authorsSelector">
-                  {Object.entries(filters["author"]).map(([key, value]) => {
-                    return (
-                      <Form.Check
-                        type={"checkbox"}
-                        name={key}
-                        id={key}
-                        label={key + " (" + value + ")"}
-                        defaultChecked={checkedFilters[key]}
-                      />
-                    );
-                  })}
-                </Form>
-              </Tab> */}
-              {/* <Tab eventKey="cuisine" title="Cuisine">
-                <Form id="cuisinesSelector">
-                  {Object.entries(filters["cuisine"]).map(([key, value]) => {
-                    return (
-                      <Form.Check
-                        type={"checkbox"}
-                        name={key}
-                        id={key}
-                        label={key + " (" + value + ")"}
-                        defaultChecked={checkedFilters[key]}
-                      />
-                    );
-                  })}
-                </Form>
-              </Tab> */}
+              <Tab eventKey="author" title="Author">
+                <FilterSelector formId="authorsSelector" filterType="author" />
+              </Tab>
+              <Tab eventKey="cuisine" title="Cuisine">
+                <FilterSelector
+                  formId="cuisinesSelector"
+                  filterType="cuisine"
+                />
+              </Tab>
               <Tab eventKey="ingredients" title="Ingredients">
-                <Form id="ingredientsSelector">
-                  {Object.entries(filters["ingredients"]).map(
-                    ([key, value]) => {
-                      return (
-                        <Form.Check
-                          type={"checkbox"}
-                          name={key}
-                          id={key}
-                          label={key + " (" + value + ")"}
-                          defaultChecked={selectedFilters[key]}
-                        />
-                      );
-                    }
-                  )}
-                </Form>
+                <FilterSelector
+                  formId="ingredientsSelector"
+                  filterType="ingredients"
+                />
               </Tab>
               <Tab eventKey="time" title="Time">
                 <InputGroup>
@@ -318,20 +268,11 @@ export default function FilterModal(props) {
                   </Container>
                 </InputGroup>
               </Tab>
-              <Tab eventKey="contact" title="Categories">
-                <Form id="categoriesSelector">
-                  {Object.entries(filters["categories"]).map(([key, value]) => {
-                    return (
-                      <Form.Check
-                        type={"checkbox"}
-                        name={key}
-                        id={key}
-                        label={key + " (" + value + ")"}
-                        defaultChecked={selectedFilters[key]}
-                      />
-                    );
-                  })}
-                </Form>
+              <Tab eventKey="category" title="Categories">
+                <FilterSelector
+                  formId="categoriesSelector"
+                  filterType="categories"
+                />
               </Tab>
             </Tabs>
           </Modal.Body>
