@@ -1,4 +1,5 @@
 from flask import Flask, request, jsonify
+from flask.json import detect_encoding
 from flask_cors import CORS
 import firebase_admin
 from firebase_admin import credentials
@@ -69,40 +70,12 @@ class Recipe:
 # }
 @app.route("/", methods=["POST"])
 def retrieve_recipes():
-    def get_recipes_less_than_time(collection_ref, time, field_name):
-        return map(lambda doc: doc.id, collection_ref.where(field_name, "<=", int(time)).stream())
-
-    def get_recipes_in_categories(collection_ref, categories):
+    def get_recipe_matching_filter(values, key, comparator):
         union = set()
-        for category in categories:
+
+        for value in values:
             union.update(map(lambda doc: doc.id, collection_ref.where(
-                "categories", "array_contains", category).stream()))
-
-        return union
-
-    def get_recipes_containing_ingredients(collection_ref, ingredients):
-        union = set()
-        for ingredient in ingredients:
-            union.update(map(lambda doc: doc.id, collection_ref.where(
-                "ingredients", "array_contains", ingredient).stream()))
-            union.update(map(lambda doc: doc.id, collection_ref.where(
-                "optional_ingredients", "array_contains", ingredient).stream()))
-
-        return union
-
-    def get_recipes_by_authors(collection_ref, authors):
-        union = set()
-        for author in authors:
-            union.update(map(lambda doc: doc.id, collection_ref.where(
-                "author", "==", author).stream()))
-
-        return union
-
-    def get_recipes_in_cuisines(collection_ref, cuisines):
-        union = set()
-        for cuisine in cuisines:
-            union.update(map(lambda doc: doc.id, collection_ref.where(
-                "cuisine", "==", cuisine).stream()))
+                key, comparator, value).stream()))
 
         return union
 
@@ -113,22 +86,18 @@ def retrieve_recipes():
     for doc in collection_ref.stream():
         recipe_ids.add(doc.id)
 
+    comparator = {"categories": "array_contains", "author": "==", "cuisine": "==", "ingredients": "array_contains"}
+
     # filtering out recipes that don't match given filters
     for key in req:
-        if key == "categories":
-            recipe_ids = recipe_ids.intersection(
-                get_recipes_in_categories(collection_ref, req["categories"]))
-        elif key == "author":
-            recipe_ids = recipe_ids.intersection(get_recipes_by_authors(collection_ref, req["author"]))
-        elif key == "cuisine":
-            recipe_ids = recipe_ids.intersection(
-                get_recipes_in_cuisines(collection_ref, req["cuisine"]))
+        if key in ["categories", "author", "cuisine"]:
+            recipe_ids.intersection_update(get_recipe_matching_filter(req[key], key, comparator[key]))
         elif key in ["total_time", "prep_time", "cook_time"]:
-            recipe_ids = recipe_ids.intersection(
-                get_recipes_less_than_time(collection_ref, req[key], key))
+            recipe_ids.intersection_update(get_recipe_matching_filter([int(req[key])], key, "<="))
         elif key == "ingredients":
-            recipe_ids = recipe_ids.intersection(
-                get_recipes_containing_ingredients(collection_ref, req["ingredients"]))
+            recipe_ids.intersection_update(get_recipe_matching_filter(
+                req["ingredients"], "ingredients", "array_contains").update(get_recipe_matching_filter(
+                    req["ingredients"], "optional_ingredients", "array_contains")))
 
     return jsonify({"res": list(recipe_ids)})
 
@@ -248,7 +217,8 @@ def update_recipe():
     new_recipe_data = Recipe.from_dict(req).to_dict()
     collection_ref.document(recipe_id).update(new_recipe_data)
 
-    update_recipe_details_counter(new_recipe_data, old_recipe_data, "update")
+    update_recipe_details_counter(new_recipe_data, None, "add")
+    update_recipe_details_counter(None, old_recipe_data, "delete")
 
     return jsonify({"res": "recipe updated"})
 
@@ -277,103 +247,53 @@ def delete_recipe():
 
 
 def update_recipe_details_counter(new_recipe_data, old_recipe_data, method):
-    recipe_details_collection = db.collection("recipe_details_counter")
-    if method == "add":
-        recipe_details_collection.document("author").update(
-            {db.field_path(new_recipe_data["author"]): firestore.Increment(1)})
+    def has_one_recipe(doc_name):
+        return recipe_details_collection.document(doc_name).get().get(db.field_path(old_recipe_data[doc_name])) == 1
 
-        recipe_details_collection.document("cuisine").update(
-            {db.field_path(new_recipe_data["cuisine"]): firestore.Increment(1)})
+    def inc_count(doc_name, key, count_change):
+        recipe_details_collection.document(doc_name).update(
+            {db.field_path(key): firestore.Increment(count_change)})
+
+    def del_entry(doc_name, key):
+        recipe_details_collection.document(doc_name).update({
+            db.field_path(key): firestore.DELETE_FIELD})
+
+    def add_recipe():
+        inc_count("author", new_recipe_data["author"], 1)
+        inc_count("cuisine", new_recipe_data["cuisine"], 1)
 
         for cat in new_recipe_data["categories"]:
-            recipe_details_collection.document("categories").update(
-                {db.field_path(cat): firestore.Increment(1)})
+            inc_count("categories", cat, 1)
 
         for ing in new_recipe_data["ingredients"]:
-            recipe_details_collection.document("ingredients").update(
-                {db.field_path(ing): firestore.Increment(1)})
-    elif method == "update":
-        if new_recipe_data["author"] != old_recipe_data["author"]:
-            if recipe_details_collection.document("author").get().get(
-                    db.field_path(old_recipe_data["author"])) == 1:
-                recipe_details_collection.document("author").update({
-                    db.field_path(old_recipe_data["author"]): firestore.DELETE_FIELD})
-            else:
-                recipe_details_collection.document("author").update(
-                    {db.field_path(old_recipe_data["author"]): firestore.Increment(-1)})
-            recipe_details_collection.document("author").update(
-                {db.field_path(new_recipe_data["author"]): firestore.Increment(1)})
-        if new_recipe_data["cuisine"] != old_recipe_data["cuisine"]:
-            if recipe_details_collection.document("cuisine").get().get(
-                    db.field_path(old_recipe_data["cuisine"])) == 1:
-                recipe_details_collection.document("cuisine").update({
-                    db.field_path(old_recipe_data["cuisine"]): firestore.DELETE_FIELD})
-            else:
-                recipe_details_collection.document("cuisine").update(
-                    {db.field_path(old_recipe_data["cuisine"]): firestore.Increment(-1)})
-            recipe_details_collection.document("cuisine").update(
-                {db.field_path(new_recipe_data["cuisine"]): firestore.Increment(1)})
-        categories_added = list(set(new_recipe_data["categories"]) - set(old_recipe_data["categories"]))
-        categories_removed = list(set(old_recipe_data["categories"]) - set(new_recipe_data["categories"]))
+            inc_count("ingredients", ing, 1)
 
-        for cat in categories_added:
-            recipe_details_collection.document("categories").update(
-                {db.field_path(cat): firestore.Increment(1)})
-
-        for cat in categories_removed:
-            if recipe_details_collection.document("categories").get().get(db.field_path(cat)) == 1:
-                recipe_details_collection.document("categories").update({
-                    db.field_path(cat): firestore.FieldValue.delete()})
-            else:
-                recipe_details_collection.document("categories").update(
-                    {db.field_path(cat): firestore.Increment(-1)})
-
-        ingredient_added = list(set(new_recipe_data["ingredients"]) - set(old_recipe_data["ingredients"]))
-        ingredients_removed = list(set(old_recipe_data["ingredients"]) - set(new_recipe_data["ingredients"]))
-
-        for ing in ingredient_added:
-            recipe_details_collection.document("ingredients").update(
-                {db.field_path(ing): firestore.Increment(1)})
-
-        for ing in ingredients_removed:
-            if recipe_details_collection.document("ingredients").get().get(db.field_path(ing)) == 1:
-                recipe_details_collection.document("ingredients").update({
-                    db.field_path(ing): firestore.FieldValue.delete()})
-            else:
-                recipe_details_collection.document("ingredients").update(
-                    {db.field_path(ing): firestore.Increment(-1)})
-    elif method == "delete":
-        if recipe_details_collection.document("author").get().get(
-                db.field_path(old_recipe_data["author"])) == 1:
-            recipe_details_collection.document("author").update({
-                db.field_path(old_recipe_data["author"]): firestore.DELETE_FIELD
-            })
+    def del_recipe():
+        if has_one_recipe("author"):
+            del_entry("author", old_recipe_data["author"])
         else:
-            recipe_details_collection.document("author").update(
-                {db.field_path(old_recipe_data["author"]): firestore.Increment(-1)})
+            inc_count("author", old_recipe_data["author"], -1)
 
-        if recipe_details_collection.document("cuisine").get().get(
-                db.field_path(old_recipe_data["cuisine"])) == 1:
-            recipe_details_collection.document("cuisine").update({
-                db.field_path(old_recipe_data["cuisine"]): firestore.DELETE_FIELD
-            })
+        if has_one_recipe("cuisine"):
+            del_entry("cuisine", old_recipe_data["cuisine"])
         else:
-            recipe_details_collection.document("cuisine").update(
-                {db.field_path(old_recipe_data["cuisine"]): firestore.Increment(-1)})
+            inc_count("cuisine", old_recipe_data["cuisine"], -1)
 
         for cat in old_recipe_data["categories"]:
-            if recipe_details_collection.document("categories").get().get(db.field_path(cat)) == 1:
-                recipe_details_collection.document("categories").update({
-                    db.field_path(cat): firestore.DELETE_FIELD
-                })
+            if has_one_recipe("categories"):
+                del_entry("categories", cat)
             else:
-                recipe_details_collection.document("categories").update(
-                    {db.field_path(cat): firestore.Increment(-1)})
+                inc_count("categories", cat, -1)
 
         for ing in old_recipe_data["ingredients"]:
-            if recipe_details_collection.document("ingredients").get().get(db.field_path(ing)) == 1:
-                recipe_details_collection.document("ingredients").update({
-                    db.field_path(ing): firestore.DELETE_FIELD})
+            if has_one_recipe("ingredients"):
+                del_entry("ingredients", ing)
             else:
-                recipe_details_collection.document("ingredients").update(
-                    {db.field_path(ing): firestore.Increment(-1)})
+                inc_count("ingredients", ing, -1)
+
+    recipe_details_collection = db.collection("recipe_details_counter")
+
+    if method == "add":
+        add_recipe()
+    else:
+        del_recipe()
