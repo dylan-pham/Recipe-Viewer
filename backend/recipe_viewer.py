@@ -95,9 +95,14 @@ def retrieve_recipes():
         elif key in ["total_time", "prep_time", "cook_time"]:
             recipe_ids.intersection_update(get_recipe_matching_filter([int(req[key])], key, "<="))
         elif key == "ingredients":
-            recipe_ids.intersection_update(get_recipe_matching_filter(
-                req["ingredients"], "ingredients", "array_contains").update(get_recipe_matching_filter(
-                    req["ingredients"], "optional_ingredients", "array_contains")))
+            recipe_ids.intersection_update(
+                get_recipe_matching_filter(
+                    req["ingredients"],
+                    "ingredients", "array_contains")
+                .union(
+                    get_recipe_matching_filter(
+                        req["ingredients"],
+                        "optional_ingredients", "array_contains")))
 
     return jsonify({"res": list(recipe_ids)})
 
@@ -274,6 +279,9 @@ def update_recipe_details_counter(new_recipe_data, old_recipe_data, method):
         for ing in new_recipe_data["ingredients"]:
             inc_count("ingredients", ing, 1)
 
+        for opt_ing in new_recipe_data["optional_ingredients"]:
+            inc_count("ingredients", opt_ing, 1)
+
     def del_recipe():
         if has_one_recipe("author"):
             del_entry("author", old_recipe_data["author"])
@@ -296,6 +304,12 @@ def update_recipe_details_counter(new_recipe_data, old_recipe_data, method):
                 del_entry("ingredients", ing)
             else:
                 inc_count("ingredients", ing, -1)
+
+        for opt_ing in old_recipe_data["optional_ingredients"]:
+            if has_one_recipe("ingredients"):
+                del_entry("ingredients", opt_ing)
+            else:
+                inc_count("ingredients", opt_ing, -1)
 
     recipe_details_collection = db.collection("recipe_details_counter")
 

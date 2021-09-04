@@ -11,29 +11,49 @@ import Row from "react-bootstrap/Row";
 import Col from "react-bootstrap/Col";
 import Container from "react-bootstrap/Container";
 
-export default function FilterModal(props) {
-  const [filters, setFilters] = useState(null);
-  const [selectedFilters] = useState({});
-  const [maxTotalTimeValue, setMaxTotalTimeValue] = useState([24, 60]);
-  const [maxPrepTimeValue, setMaxPrepTimeValue] = useState([24, 60]);
-  const [maxCookTimeValue, setMaxCookTimeValue] = useState([24, 60]);
+function FilterSelector(props) {
+  const [selectedFilters, setSelectedFilters] = useState(props.selectedFilters);
 
-  function FilterSelector(props) {
-    return (
-      <Form id={props.formId}>
-        {Object.entries(filters[props.filterType]).map(([key, value]) => {
+  useEffect(() => {
+    setSelectedFilters(props.selectedFilters);
+  }, [props.selectedFilters]);
+
+  return (
+    <Form id={props.formId}>
+      {Object.entries(props.filterCounts[props.filterType]).map(
+        ([key, value]) => {
           return (
             <Form.Check
               type={"checkbox"}
               name={key}
               id={key}
               label={key + " (" + value + ")"}
-              defaultChecked={selectedFilters[key]}
+              checked={selectedFilters[key]}
+              onClick={() => props.onClick(key)}
             />
           );
-        })}
-      </Form>
-    );
+        }
+      )}
+    </Form>
+  );
+}
+
+export default function FilterModal(props) {
+  const [filterCounts, setFilterCounts] = useState(null);
+  const [selectedAuthors, setSelectedAuthors] = useState({});
+  const [selectedCuisines, setSelectedCuisines] = useState({});
+  const [selectedIngredients, setSelectedIngredients] = useState({});
+  const [selectedCategories, setSelectedCategories] = useState({});
+  const [maxTotalTimeValue, setMaxTotalTimeValue] = useState([24, 60]);
+  const [maxPrepTimeValue, setMaxPrepTimeValue] = useState([24, 60]);
+  const [maxCookTimeValue, setMaxCookTimeValue] = useState([24, 60]);
+
+  function addNewFilters(data, filterType, existingFilters, addFunc) {
+    Object.keys(data["res"][filterType]).forEach((x) => {
+      if (!(x in existingFilters)) {
+        addFunc({ ...existingFilters, [x]: false });
+      }
+    });
   }
 
   useEffect(() => {
@@ -43,63 +63,49 @@ export default function FilterModal(props) {
     })
       .then((response) => response.json())
       .then((data) => {
-        setFilters(data["res"]);
-        Object.keys(data["res"]).forEach((x) => {
-          Object.keys(data["res"][x]).forEach((y) => {
-            if (!(y in selectedFilters)) {
-              selectedFilters[y] = false;
-            }
-          });
-        });
+        setFilterCounts(data["res"]);
+        addNewFilters(data, "author", selectedAuthors, setSelectedAuthors);
+        addNewFilters(data, "cuisine", selectedCuisines, setSelectedCuisines);
+        addNewFilters(
+          data,
+          "ingredients",
+          selectedIngredients,
+          setSelectedIngredients
+        );
+        addNewFilters(
+          data,
+          "categories",
+          selectedCategories,
+          setSelectedCategories
+        );
         props.doneRefreshing();
       });
   }, [props.refresh]);
 
-  function getSelectedFiltersOfType(formId) {
-    let values = [];
-    Array.from(document.getElementById(formId).elements).forEach((element) => {
-      if (element.checked) {
-        values.push(element.getAttribute("name"));
+  function applySelectedFilters(obj, tempSelectedFilters, filterType) {
+    let accList = [];
+    Object.keys(obj).forEach((x) => {
+      if (obj[x] == true) {
+        accList.push(x);
       }
     });
 
-    return values;
-  }
-
-  function processSelectedFiltersOfType(type, formId, selectedFiltersAcc) {
-    let filtersSelected = getSelectedFiltersOfType(formId);
-    if (filtersSelected.length !== 0) {
-      selectedFiltersAcc[type] = filtersSelected;
-
-      filtersSelected.forEach((x) => {
-        selectedFilters[x] = true;
-      });
+    if (accList.length !== 0) {
+      tempSelectedFilters[filterType] = accList;
     }
   }
 
   function getSelectedFilters() {
     let tempSelectedFilters = {};
 
-    processSelectedFiltersOfType(
-      "categories",
-      "categoriesSelector",
-      tempSelectedFilters
+    applySelectedFilters(selectedAuthors, tempSelectedFilters, "author");
+    applySelectedFilters(selectedCuisines, tempSelectedFilters, "cuisine");
+    applySelectedFilters(
+      selectedIngredients,
+      tempSelectedFilters,
+      "ingredients"
     );
-    processSelectedFiltersOfType(
-      "author",
-      "authorsSelector",
-      tempSelectedFilters
-    );
-    processSelectedFiltersOfType(
-      "cuisine",
-      "cuisinesSelector",
-      tempSelectedFilters
-    );
-    processSelectedFiltersOfType(
-      "ingredients",
-      "ingredientsSelector",
-      tempSelectedFilters
-    );
+    applySelectedFilters(selectedCategories, tempSelectedFilters, "categories");
 
     let maxTotalTime = maxTotalTimeValue[0] * 60 + maxTotalTimeValue[1];
     if (!isNaN(maxTotalTime)) {
@@ -119,19 +125,26 @@ export default function FilterModal(props) {
     return tempSelectedFilters;
   }
 
-  const resetFilters = () => {
+  const clearFilters = () => {
     setMaxTotalTimeValue([24, 60]);
     setMaxPrepTimeValue([24, 60]);
     setMaxCookTimeValue([24, 60]);
 
-    Object.keys(selectedFilters).forEach((filter) => {
-      selectedFilters[filter] = false;
-      var filterCheckbox = document.getElementById(filter);
-      filterCheckbox.checked = false;
-    });
+    Object.keys(selectedAuthors).forEach((key) =>
+      setSelectedAuthors({ ...selectedAuthors, [key]: false })
+    );
+    Object.keys(selectedCuisines).forEach((key) =>
+      setSelectedCuisines({ ...selectedCuisines, [key]: false })
+    );
+    Object.keys(selectedIngredients).forEach((key) =>
+      setSelectedIngredients({ ...selectedIngredients, [key]: false })
+    );
+    Object.keys(selectedCategories).forEach((key) =>
+      setSelectedCategories({ ...selectedCategories, [key]: false })
+    );
   };
 
-  if (filters === null) {
+  if (filterCounts === null) {
     return <div></div>;
   } else {
     return (
@@ -147,18 +160,45 @@ export default function FilterModal(props) {
           <Modal.Body>
             <Tabs defaultActiveKey="author" id="uncontrolled-tab-example">
               <Tab eventKey="author" title="Author">
-                <FilterSelector formId="authorsSelector" filterType="author" />
+                <FilterSelector
+                  filterCounts={filterCounts}
+                  selectedFilters={selectedAuthors}
+                  formId="authorsSelector"
+                  filterType="author"
+                  onClick={(key) => {
+                    setSelectedAuthors({
+                      ...selectedAuthors,
+                      [key]: !selectedAuthors[key],
+                    });
+                  }}
+                />
               </Tab>
               <Tab eventKey="cuisine" title="Cuisine">
                 <FilterSelector
+                  filterCounts={filterCounts}
+                  selectedFilters={selectedCuisines}
                   formId="cuisinesSelector"
                   filterType="cuisine"
+                  onClick={(key) => {
+                    setSelectedCuisines({
+                      ...selectedCuisines,
+                      [key]: !selectedCuisines[key],
+                    });
+                  }}
                 />
               </Tab>
               <Tab eventKey="ingredients" title="Ingredients">
                 <FilterSelector
+                  filterCounts={filterCounts}
+                  selectedFilters={selectedIngredients}
                   formId="ingredientsSelector"
                   filterType="ingredients"
+                  onClick={(key) => {
+                    setSelectedIngredients({
+                      ...selectedIngredients,
+                      [key]: !selectedIngredients[key],
+                    });
+                  }}
                 />
               </Tab>
               <Tab eventKey="time" title="Time">
@@ -270,14 +310,22 @@ export default function FilterModal(props) {
               </Tab>
               <Tab eventKey="category" title="Categories">
                 <FilterSelector
+                  filterCounts={filterCounts}
+                  selectedFilters={selectedCategories}
                   formId="categoriesSelector"
                   filterType="categories"
+                  onClick={(key) => {
+                    setSelectedCategories({
+                      ...selectedCategories,
+                      [key]: !selectedCategories[key],
+                    });
+                  }}
                 />
               </Tab>
             </Tabs>
           </Modal.Body>
           <Modal.Footer>
-            <Button onClick={resetFilters}>Reset Filters</Button>
+            <Button onClick={clearFilters}>Reset Filters</Button>
           </Modal.Footer>
         </Modal>
       </>
