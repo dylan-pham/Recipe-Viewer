@@ -258,8 +258,10 @@ def delete_recipe():
 
 
 def update_recipe_details_counter(new_recipe_data, old_recipe_data, method):
-    def has_one_recipe(doc_name):
-        return recipe_details_collection.document(doc_name).get().get(db.field_path(old_recipe_data[doc_name])) == 1
+    def has_one_recipe(doc_name, field_name=None):
+        if field_name == None:
+            field_name = old_recipe_data[doc_name]
+        return recipe_details_collection.document(doc_name).get().get(db.field_path(field_name)) == 1
 
     def inc_count(doc_name, key, count_change):
         recipe_details_collection.document(doc_name).update(
@@ -294,19 +296,19 @@ def update_recipe_details_counter(new_recipe_data, old_recipe_data, method):
             inc_count("cuisine", old_recipe_data["cuisine"], -1)
 
         for cat in old_recipe_data["categories"]:
-            if has_one_recipe("categories"):
+            if has_one_recipe("categories", cat):
                 del_entry("categories", cat)
             else:
                 inc_count("categories", cat, -1)
 
         for ing in old_recipe_data["ingredients"]:
-            if has_one_recipe("ingredients"):
+            if has_one_recipe("ingredients", ing):
                 del_entry("ingredients", ing)
             else:
                 inc_count("ingredients", ing, -1)
 
         for opt_ing in old_recipe_data["optional_ingredients"]:
-            if has_one_recipe("ingredients"):
+            if has_one_recipe("ingredients", opt_ing):
                 del_entry("ingredients", opt_ing)
             else:
                 inc_count("ingredients", opt_ing, -1)
